@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>График дежурств — Вариант 1 (даты × департаменты)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
+
+  .scroll-area {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    background: var(--gray-25);
+  }
+
+  .roster-grid {
+    --cols: 72px repeat(var(--dept-count), minmax(160px, 1fr));
+  }
+
+  /* --- dept header (sticky top layer, 2 строки: департамент / группа) ---
+     Важно: sticky применяется к самой строке .dept-header-row, а не к
+     отдельным ячейкам. Ячейка может "прилипать" только в пределах высоты
+     своего родителя — если бы sticky был на ячейках высотой 56px, шапка
+     уезжала бы вместе с этой 56px-строкой уже после первого экрана скролла.
+     Строка же является прямым потомком #rosterGrid, который тянется на всю
+     высоту всех спринтов, поэтому именно на ней sticky держится до конца.
+     Департамент без групп (Roster.buildColumns) — одна колонка, ячейка
+     .dept-header-cell.no-group растягивается на обе строки. Департамент с
+     группами (например "Поддержка") — ячейка .dept-header-cell растянута
+     по горизонтали на все свои колонки в 1-й строке, а во 2-й строке под
+     ней — по одной .group-header-cell на каждую группу. */
+  .dept-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    display: grid;
+    grid-template-columns: var(--cols);
+    grid-template-rows: 28px 28px;
+    background: #fff;
+  }
+  .dept-header-cell, .group-header-cell, .date-header-cell {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 13px;
+  }
+  .dept-header-cell { grid-row: 1; border-bottom: 1px solid var(--gray-100); }
+  .dept-header-cell.no-group { grid-row: 1 / span 2; border-bottom: 1px solid var(--gray-200); }
+  .group-header-cell {
+    grid-row: 2;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--gray-500);
+    border-bottom: 1px solid var(--gray-200);
+    border-left: 1px solid var(--gray-100);
+  }
+  .date-header-cell {
+    grid-row: 1 / span 2;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    justify-content: center;
+    color: var(--gray-500);
+    font-weight: 500;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .sprint-block {
+    display: grid;
+    grid-template-columns: var(--cols);
+    grid-auto-rows: 44px;
+  }
+
+  /* --- sprint divider (sticky, sits right under dept header) --- */
+  .sprint-divider {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    position: sticky;
+    top: 56px;
+    z-index: 5;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    border-top: 1px solid var(--gray-200);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+  }
+  .sprint-divider .range { font-weight: 400; color: var(--gray-500); }
+
+  /* --- date column --- */
+  .date-cell {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    width: 72px;
+    height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-bottom: 1px solid var(--gray-100);
+    border-right: 1px solid var(--gray-200);
+    font-size: 12px;
+    color: var(--gray-700);
+    line-height: 1;
+  }
+  .date-cell .num { line-height: 14px; }
+  .date-cell .dow { font-size: 10px; line-height: 12px; color: var(--gray-500); }
+  .date-cell.is-weekend .num { color: var(--error-500); }
+  .date-cell.is-weekend { background: var(--gray-25); }
+  .date-cell.is-today { background: var(--brand-25); }
+  .date-cell.is-today .num { color: var(--brand-600); font-weight: 700; }
+  .today-chip {
+    font-size: 8px;
+    line-height: 10px;
+    font-weight: 600;
+    color: var(--brand-700);
+    background: var(--brand-50);
+    border-radius: 4px;
+    padding: 0 4px;
+    margin-top: 2px;
+  }
+
+  /* --- department body column --- */
+  .dept-col {
+    position: relative;
+    border-right: 1px solid var(--gray-200);
+    background: #fff;
+  }
+  .dept-col.is-today-bg::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    background: var(--brand-25);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .day-bg-row {
+    position: absolute;
+    left: 0; right: 0;
+    height: 44px;
+    border-bottom: 1px solid var(--gray-100);
+    box-sizing: border-box;
+  }
+  .day-bg-row.weekend { background: var(--gray-25); }
+  .day-bg-row.today { background: var(--brand-25); }
+
+  .dept-col .duty-card {
+    position: absolute;
+    box-sizing: border-box;
+  }
+
+  .dept-col .empty-dash-wrap {
+    position: absolute;
+    left: 0; right: 0;
+    height: 44px;
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="page-title-block">
+    <h1 class="page-title">График дежурств</h1>
+    <span class="badge badge-gray">Вариант 1 · даты × департаменты</span>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Фильтр по типу смены" id="shiftTabs">
+  <button class="tab-btn" role="tab" aria-selected="true" data-shift="all">Все</button>
+  <button class="tab-btn" role="tab" aria-selected="false" data-shift="day">Дневное</button>
+  <button class="tab-btn" role="tab" aria-selected="false" data-shift="night">Ночное</button>
+  <button class="tab-btn" role="tab" aria-selected="false" data-shift="weekend">Выходные</button>
+</nav>
+
+<div class="filters-bar">
+  <div class="filters-left">
+    <div class="btn-group" role="group" aria-label="Масштаб" id="zoomGroup">
+      <button class="btn" aria-pressed="true" data-zoom="sprints">Спринты</button>
+      <button class="btn" aria-pressed="false" data-zoom="quarter">Квартал</button>
+      <button class="btn" aria-pressed="false" data-zoom="year">Год</button>
+    </div>
+    <button class="icon-btn" id="prevBtn" aria-label="Предыдущий период" hidden>←</button>
+    <span class="period-label" id="periodLabel"></span>
+    <button class="icon-btn" id="nextBtn" aria-label="Следующий период" hidden>→</button>
+    <button class="btn" id="todayBtn">Сегодня</button>
+    <span class="today-count" id="todayCount">Сегодня дежурят: <strong>0</strong></span>
+  </div>
+  <div class="filters-right">
+    <div class="dropdown" id="deptDropdown">
+      <button class="btn" id="deptDropdownBtn" aria-haspopup="true" aria-expanded="false">Департаменты <span id="deptFilterCount"></span></button>
+      <div class="dropdown-panel" id="deptDropdownPanel"></div>
+    </div>
+  </div>
+</div>
+
+<main class="scroll-area" id="scrollArea">
+  <div class="roster-grid" id="rosterGrid" role="grid" aria-label="График дежурств по датам и департаментам">
+    <div class="dept-header-row" id="deptHeaderRow"></div>
+    <div id="sprintBlocks"></div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="summaryModalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="summaryModalTitle">
+    <div class="modal-header">
+      <h2 class="modal-title" id="summaryModalTitle">Сводка по спринту</h2>
+      <button type="button" class="modal-close" id="summaryModalClose" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body" id="summaryModalBody"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var DAY_H = 44;
+  var peopleById = {};
+  DATA.people.forEach(function (p) { peopleById[p.id] = p; });
+  var departmentsById = {};
+  DATA.departments.forEach(function (d) { departmentsById[d.id] = d; });
+
+  var MONTHS_NOM = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+
+  function quarterStartOf(d) {
+    var q = Math.floor(d.getMonth() / 3);
+    return new Date(d.getFullYear(), q * 3, 1);
+  }
+  function mondayOnOrBefore(d) {
+    var r = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var wd = r.getDay(); // 0=Sun..6=Sat
+    var diff = (wd === 0) ? 6 : wd - 1;
+    r.setDate(r.getDate() - diff);
+    return r;
+  }
+
+  var lastRenderContext = null;
+
+  var state = {
+    shift: "all",
+    hiddenDepts: new Set(),
+    hiddenGroups: new Set(),                                  // ключи "deptId::groupId"
+    zoom: "sprints",                                          // sprints | quarter | year
+    quarterAnchor: quarterStartOf(Roster.fromISO(DATA.today)),
+    yearAnchor: Roster.fromISO(DATA.today).getFullYear()
+  };
+
+  function groupKey(deptId, groupId) { return deptId + "::" + groupId; }
+
+  /**
+   * Департаменты, видимые с учётом обоих уровней фильтра: скрытые целиком
+   * департаменты выброшены; у оставшихся departments со groups скрытые
+   * группы вырезаны из .groups (департамент с 0 видимых групп тоже
+   * выбрасывается). Используется и для построения колонок грида, и как
+   * основа для фильтрации duties (Roster.buildColumns не меняется).
+   */
+  function visibleDepartments() {
+    return DATA.departments
+      .filter(function (d) { return !state.hiddenDepts.has(d.id); })
+      .map(function (d) {
+        if (!d.groups) return d;
+        var groups = d.groups.filter(function (g) { return !state.hiddenGroups.has(groupKey(d.id, g.id)); });
+        return groups.length === d.groups.length ? d : Object.assign({}, d, { groups: groups });
+      })
+      .filter(function (d) { return !d.groups || d.groups.length > 0; });
+  }
+
+  // ---------------------------------------------------------- controls --
+
+  var shiftTabs = document.getElementById("shiftTabs");
+  shiftTabs.addEventListener("click", function (e) {
+    var btn = e.target.closest(".tab-btn");
+    if (!btn) return;
+    shiftTabs.querySelectorAll(".tab-btn").forEach(function (b) { b.setAttribute("aria-selected", b === btn ? "true" : "false"); });
+    state.shift = btn.dataset.shift;
+    render();
+  });
+
+  var deptDropdown = document.getElementById("deptDropdown");
+  var deptDropdownBtn = document.getElementById("deptDropdownBtn");
+  var deptDropdownPanel = document.getElementById("deptDropdownPanel");
+  DATA.departments.forEach(function (d) {
+    var row = document.createElement("label");
+    row.className = "dropdown-item";
+    row.innerHTML = '<input type="checkbox" checked data-dept="' + d.id + '"> ' + Roster.escapeHtml(d.name);
+    deptDropdownPanel.appendChild(row);
+    if (!d.groups) return;
+    d.groups.forEach(function (g) {
+      var groupRow = document.createElement("label");
+      groupRow.className = "dropdown-item is-group";
+      groupRow.innerHTML = '<input type="checkbox" checked data-dept="' + d.id + '" data-group="' + g.id + '"> ' + Roster.escapeHtml(g.name);
+      deptDropdownPanel.appendChild(groupRow);
+    });
+  });
+  deptDropdownBtn.addEventListener("click", function () {
+    var open = deptDropdown.classList.toggle("open");
+    deptDropdownBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  document.addEventListener("click", function (e) {
+    if (!deptDropdown.contains(e.target)) { deptDropdown.classList.remove("open"); deptDropdownBtn.setAttribute("aria-expanded", "false"); }
+  });
+  deptDropdownPanel.addEventListener("change", function (e) {
+    var cb = e.target;
+    if (!cb.dataset.dept) return;
+    if (cb.dataset.group) {
+      var key = groupKey(cb.dataset.dept, cb.dataset.group);
+      if (cb.checked) state.hiddenGroups.delete(key); else state.hiddenGroups.add(key);
+    } else {
+      if (cb.checked) state.hiddenDepts.delete(cb.dataset.dept); else state.hiddenDepts.add(cb.dataset.dept);
+      // Группы внутри выключенного департамента недоступны для клика, но
+      // сохраняют своё предыдущее состояние — включатся обратно вместе с ним.
+      deptDropdownPanel.querySelectorAll('input[data-group][data-dept="' + cb.dataset.dept + '"]').forEach(function (groupCb) {
+        groupCb.disabled = !cb.checked;
+        groupCb.closest(".dropdown-item").classList.toggle("is-disabled", !cb.checked);
+      });
+    }
+    render();
+  });
+
+  var zoomGroup = document.getElementById("zoomGroup");
+  zoomGroup.addEventListener("click", function (e) {
+    var btn = e.target.closest(".btn");
+    if (!btn) return;
+    zoomGroup.querySelectorAll(".btn").forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+    state.zoom = btn.dataset.zoom;
+    render();
+    requestAnimationFrame(scrollToCurrentPeriod);
+  });
+  zoomGroup.addEventListener("keydown", function (e) {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    var buttons = Array.prototype.slice.call(zoomGroup.querySelectorAll(".btn"));
+    var idx = buttons.indexOf(document.activeElement);
+    if (idx === -1) return;
+    var next = e.key === "ArrowRight" ? Math.min(buttons.length - 1, idx + 1) : Math.max(0, idx - 1);
+    buttons[next].focus();
+    buttons[next].click();
+    e.preventDefault();
+  });
+
+  document.getElementById("prevBtn").addEventListener("click", function () { shiftPeriod(-1); });
+  document.getElementById("nextBtn").addEventListener("click", function () { shiftPeriod(1); });
+  document.getElementById("todayBtn").addEventListener("click", function () {
+    if (state.zoom === "sprints") { scrollToToday(); return; }
+    state.quarterAnchor = quarterStartOf(Roster.fromISO(DATA.today));
+    state.yearAnchor = Roster.fromISO(DATA.today).getFullYear();
+    render();
+    requestAnimationFrame(scrollToCurrentPeriod);
+  });
+
+  function shiftPeriod(dir) {
+    if (state.zoom === "quarter") {
+      state.quarterAnchor = new Date(state.quarterAnchor.getFullYear(), state.quarterAnchor.getMonth() + dir * 3, 1);
+    } else if (state.zoom === "year") {
+      state.yearAnchor += dir;
+    }
+    render();
+    requestAnimationFrame(scrollToCurrentPeriod);
+  }
+
+  function scrollToToday() {
+    var el = document.querySelector('.date-cell[data-date="' + DATA.today + '"]');
+    if (el) el.scrollIntoView({ block: "center" });
+  }
+
+  // Для "Квартал"/"Год" — прыжок к строке текущей недели/месяца, если она
+  // попадает в отображаемый период; иначе просто наверх блока.
+  function scrollToCurrentPeriod() {
+    if (state.zoom === "sprints") { scrollToToday(); return; }
+    var el = document.querySelector(".date-cell.is-today");
+    if (el) el.scrollIntoView({ block: "center" });
+    else document.getElementById("scrollArea").scrollTop = 0;
+  }
+
+  function jumpToMonth(year, month) {
+    state.zoom = "sprints";
+    zoomGroup.querySelectorAll(".btn").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.zoom === "sprints" ? "true" : "false"); });
+    render();
+    requestAnimationFrame(function () {
+      var mm = String(month + 1).padStart(2, "0");
+      var el = document.querySelector('.date-cell[data-date="' + year + "-" + mm + '-01"]');
+      if (el) el.scrollIntoView({ block: "center" });
+    });
+  }
+
+  // ------------------------------------------------------------- today --
+
+  function updateTodayCount(filteredDuties) {
+    var todayDuties = filteredDuties.filter(function (d) { return d.date === DATA.today; });
+    var totalPeople = new Set(todayDuties.map(function (d) { return d.personId; })).size;
+    document.getElementById("todayCount").innerHTML = "Сегодня дежурят: <strong>" + totalPeople + "</strong>";
+  }
+
+  // -------------------------------------------------------------- grid --
+
+  function render() {
+    var visibleDepts = visibleDepartments();
+    var hiddenCount = (DATA.departments.length - visibleDepts.length) + state.hiddenGroups.size;
+    document.getElementById("deptFilterCount").textContent = hiddenCount > 0 ? "(" + hiddenCount + ")" : "";
+
+    // Департамент без groups — 1 колонка; департамент с groups (напр.
+    // "Поддержка" -> МПК/ПСУ/Хумо/Узкард) — по 1 колонке на каждую видимую
+    // группу (скрытые чекбоксом группы уже вырезаны в visibleDepartments()).
+    var columns = Roster.buildColumns(visibleDepts);
+
+    var filteredDuties = state.shift === "all" ? DATA.duties : DATA.duties.filter(function (d) { return d.shift === state.shift; });
+    // Ещё раз фильтруем по скрытым департаментам/группам — чтобы сводка по
+    // спринту (модалка) тоже не учитывала скрытых людей, не только колонки.
+    filteredDuties = filteredDuties.filter(function (d) {
+      var p = peopleById[d.personId];
+      if (!p) return false;
+      if (state.hiddenDepts.has(p.departmentId)) return false;
+      if (p.groupId && state.hiddenGroups.has(groupKey(p.departmentId, p.groupId))) return false;
+      return true;
+    });
+    updateTodayCount(filteredDuties);
+    // Сохраняем последний контекст фильтров — модалка сводки по спринту
+    // открывается по клику независимо от render() и должна видеть текущие
+    // фильтры (по табу смены / по чекбоксам департаментов).
+    lastRenderContext = { visibleDepts: visibleDepts, filteredDuties: filteredDuties, peopleById: peopleById };
+
+    document.getElementById("prevBtn").hidden = state.zoom === "sprints";
+    document.getElementById("nextBtn").hidden = state.zoom === "sprints";
+    document.getElementById("periodLabel").textContent = "";
+
+    var grid = document.getElementById("rosterGrid");
+    grid.style.setProperty("--dept-count", columns.length);
+
+    // dept header row: строка 1 — департамент (растянут на свои колонки),
+    // строка 2 — название группы внутри него (если группы есть)
+    var headerRow = document.getElementById("deptHeaderRow");
+    headerRow.innerHTML = "";
+    var dateHeader = document.createElement("div");
+    dateHeader.className = "date-header-cell";
+    dateHeader.textContent = state.zoom === "sprints" ? "Дата" : state.zoom === "quarter" ? "Неделя" : "Месяц";
+    headerRow.appendChild(dateHeader);
+
+    var seenDeptStart = {};
+    columns.forEach(function (col, idx) {
+      if (!seenDeptStart[col.deptColStart]) {
+        seenDeptStart[col.deptColStart] = true;
+        var deptCell = document.createElement("div");
+        deptCell.className = "dept-header-cell" + (col.isGrouped ? "" : " no-group");
+        deptCell.style.gridColumn = (col.deptColStart + 2) + " / span " + col.deptColSpan;
+        deptCell.textContent = col.deptName;
+        headerRow.appendChild(deptCell);
+      }
+      if (col.isGrouped) {
+        var groupCell = document.createElement("div");
+        groupCell.className = "group-header-cell";
+        groupCell.style.gridColumn = (idx + 2) + "";
+        groupCell.textContent = col.groupName;
+        headerRow.appendChild(groupCell);
+      }
+    });
+
+    var sprintBlocksEl = document.getElementById("sprintBlocks");
+    sprintBlocksEl.innerHTML = "";
+
+    if (state.zoom === "sprints") renderSprintsBody(columns, filteredDuties, sprintBlocksEl);
+    else if (state.zoom === "quarter") renderQuarterBody(columns, filteredDuties, sprintBlocksEl);
+    else renderYearBody(columns, filteredDuties, sprintBlocksEl);
+
+    Roster.wireHighlight(grid);
+  }
+
+  function columnLabel(col) {
+    return col.isGrouped ? col.deptName + " / " + col.groupName : col.deptName;
+  }
+
+  // -------------------------------------------------------- sprints mode --
+
+  function columnKey(sprintId, deptId, groupId) {
+    return sprintId + "|" + deptId + "|" + (groupId || "");
+  }
+
+  function renderSprintsBody(columns, filteredDuties, container) {
+    var spans = Roster.buildSpans(filteredDuties, peopleById, DATA.sprints);
+    var spansBySprintCol = {};
+    spans.forEach(function (s) {
+      var key = columnKey(s.sprintId, s.departmentId, s.groupId);
+      (spansBySprintCol[key] || (spansBySprintCol[key] = [])).push(s);
+    });
+
+    DATA.sprints.forEach(function (sprint) {
+      var block = document.createElement("div");
+      block.className = "sprint-block";
+      block.id = "sprint-" + sprint.id;
+
+      var days = [];
+      for (var iso = sprint.start; iso <= sprint.end; iso = Roster.addDays(iso, 1)) days.push(iso);
+      block.style.gridTemplateRows = "auto repeat(" + days.length + ", " + DAY_H + "px)";
+
+      var divider = document.createElement("div");
+      divider.className = "sprint-divider sprint-clickable";
+      divider.dataset.sprintId = sprint.id;
+      divider.tabIndex = 0;
+      divider.setAttribute("role", "button");
+      divider.setAttribute("aria-label", "Сводка по спринту " + sprint.id);
+      divider.innerHTML = sprint.id +
+        '<span class="range">' + Roster.formatRangeFull(sprint.start, sprint.end) + "</span>" +
+        (sprint.current ? '<span class="badge badge-success">Текущий</span>' : "");
+      block.appendChild(divider);
+
+      // date column cells
+      days.forEach(function (iso, idx) {
+        var cell = document.createElement("div");
+        var isToday = iso === DATA.today;
+        var isWeekend = Roster.isWeekendISO(iso);
+        cell.className = "date-cell" + (isWeekend ? " is-weekend" : "") + (isToday ? " is-today" : "");
+        cell.dataset.date = iso;
+        cell.style.gridColumn = "1";
+        cell.style.gridRow = (idx + 2) + "";
+        cell.innerHTML = '<span class="num">' + Roster.dayNum(iso) + " " + Roster.monthShort(iso) + '</span>' +
+          '<span class="dow">' + Roster.weekdayLetter(iso) + '</span>' +
+          (isToday ? '<span class="today-chip">Сегодня</span>' : "");
+        block.appendChild(cell);
+      });
+
+      // department / group columns
+      columns.forEach(function (col, colIdx) {
+        var colEl = document.createElement("div");
+        colEl.className = "dept-col";
+        colEl.style.gridColumn = (colIdx + 2) + "";
+        colEl.style.gridRow = "2 / span " + days.length;
+        colEl.setAttribute("role", "gridcell");
+
+        // day background rows (weekend / today shading)
+        days.forEach(function (iso, idx) {
+          var bg = document.createElement("div");
+          bg.className = "day-bg-row" + (iso === DATA.today ? " today" : Roster.isWeekendISO(iso) ? " weekend" : "");
+          bg.style.top = (idx * DAY_H) + "px";
+          colEl.appendChild(bg);
+        });
+
+        var colSpans = (spansBySprintCol[columnKey(sprint.id, col.deptId, col.groupId)] || []).slice();
+        var laneCount = Roster.assignLanes(colSpans) || 1;
+
+        // covered-day tracking for empty-state dash
+        var covered = new Array(days.length).fill(false);
+
+        colSpans.forEach(function (span) {
+          var startIdx = days.indexOf(span.start);
+          var endIdx = days.indexOf(span.end);
+          for (var i = startIdx; i <= endIdx; i++) covered[i] = true;
+
+          var card = Roster.renderCard(span, peopleById, departmentsById);
+          var laneWidthPct = 100 / laneCount;
+          card.style.top = (startIdx * DAY_H + 2) + "px";
+          card.style.height = ((endIdx - startIdx + 1) * DAY_H - 4) + "px";
+          card.style.left = "calc(" + (span.lane * laneWidthPct) + "% + 3px)";
+          card.style.width = "calc(" + laneWidthPct + "% - 6px)";
+          colEl.appendChild(card);
+        });
+
+        // empty-state dashes for fully uncovered days
+        covered.forEach(function (isCovered, idx) {
+          if (isCovered) return;
+          var dash = document.createElement("div");
+          dash.className = "empty-dash-wrap";
+          dash.style.top = (idx * DAY_H) + "px";
+          dash.innerHTML = '<span class="empty-dash">—</span>';
+          colEl.appendChild(dash);
+        });
+
+        block.appendChild(colEl);
+      });
+
+      container.appendChild(block);
+    });
+  }
+
+  // -------------------------------------------------------- quarter mode --
+
+  function renderQuarterBody(columns, filteredDuties, container) {
+    var anchor = state.quarterAnchor;
+    var q = Math.floor(anchor.getMonth() / 3) + 1;
+    document.getElementById("periodLabel").textContent = anchor.getFullYear() + " · Q" + q;
+
+    var weekStart = mondayOnOrBefore(anchor);
+    var weeks = [];
+    for (var i = 0; i < 13; i++) {
+      var wStart = Roster.addDaysDate(weekStart, i * 7);
+      var wEnd = Roster.addDaysDate(wStart, 6);
+      weeks.push({ start: Roster.toISO(wStart), end: Roster.toISO(wEnd) });
+    }
+
+    // Спринты — ровно 2 недели, и обе всегда попадают в один и тот же
+    // spint (14 дней = 2 понедельника), поэтому недели можно без остатка
+    // сгруппировать по спринтам и вставить перед каждой парой разделитель,
+    // как в режиме "Спринты" — чтобы было видно, из каких спринтов состоит
+    // квартал, а не только голые даты недель.
+    var rows = [];
+    var lastSprintId = null;
+    weeks.forEach(function (w) {
+      var sprint = DATA.sprints.find(function (s) { return w.start >= s.start && w.start <= s.end; });
+      if (sprint && sprint.id !== lastSprintId) {
+        rows.push({ type: "divider", sprint: sprint });
+        lastSprintId = sprint.id;
+      }
+      rows.push({ type: "week", week: w });
+    });
+
+    var block = document.createElement("div");
+    block.className = "sprint-block";
+    block.style.gridTemplateRows = rows.map(function (r) { return r.type === "divider" ? "auto" : "64px"; }).join(" ");
+
+    rows.forEach(function (r, rowIdx) {
+      if (r.type === "divider") {
+        var divider = document.createElement("div");
+        divider.className = "sprint-divider sprint-clickable";
+        divider.style.gridRow = (rowIdx + 1) + "";
+        divider.dataset.sprintId = r.sprint.id;
+        divider.tabIndex = 0;
+        divider.setAttribute("role", "button");
+        divider.setAttribute("aria-label", "Сводка по спринту " + r.sprint.id);
+        divider.innerHTML = r.sprint.id +
+          '<span class="range">' + Roster.formatRangeFull(r.sprint.start, r.sprint.end) + "</span>" +
+          (r.sprint.current ? '<span class="badge badge-success">Текущий</span>' : "");
+        block.appendChild(divider);
+        return;
+      }
+      var w = r.week;
+      var isCurrent = DATA.today >= w.start && DATA.today <= w.end;
+      var cell = document.createElement("div");
+      cell.className = "date-cell" + (isCurrent ? " is-today" : "");
+      cell.style.gridColumn = "1";
+      cell.style.gridRow = (rowIdx + 1) + "";
+      cell.innerHTML = '<span class="num">' + Roster.dayNum(w.start) + " " + Roster.monthShort(w.start) + '</span>' +
+        '<span class="dow">нед.</span>' + (isCurrent ? '<span class="today-chip">Тек.</span>' : "");
+      block.appendChild(cell);
+    });
+
+    columns.forEach(function (col, colIdx) {
+      rows.forEach(function (r, rowIdx) {
+        if (r.type !== "week") return;
+        var w = r.week;
+        var cell = document.createElement("div");
+        cell.className = "agg-cell";
+        cell.style.gridColumn = (colIdx + 2) + "";
+        cell.style.gridRow = (rowIdx + 1) + "";
+
+        var people = Roster.peopleInRange(filteredDuties, peopleById, col.deptId, w.start, w.end, col.groupId);
+        if (people.length === 0) {
+          cell.innerHTML = '<span class="empty-dash">—</span>';
+        } else {
+          var shown = people.slice(0, 3);
+          var html = shown.map(function (p) {
+            var partial = p.weekDays < 7 ? p.weekDays : null;
+            var extra = ' tabindex="0" aria-label="' + Roster.escapeHtml(p.fullName) +
+              ', ' + Roster.escapeHtml(columnLabel(col)) + ', неделя с ' + Roster.formatRangeFull(w.start, w.start) +
+              (partial ? " (" + partial + " из 7 дней — часть недели)" : "") + '" data-person-id="' + p.id + '"';
+            return Roster.avatarHtml(p, "avatar-sm", extra, p.isLead, partial);
+          }).join("");
+          if (people.length > 3) html += '<span class="agg-more">+' + (people.length - 3) + '</span>';
+          cell.innerHTML = html;
+        }
+        block.appendChild(cell);
+      });
+    });
+
+    container.appendChild(block);
+  }
+
+  // ----------------------------------------------------------- year mode --
+
+  function renderYearBody(columns, filteredDuties, container) {
+    var year = state.yearAnchor;
+    document.getElementById("periodLabel").textContent = "" + year;
+
+    var months = [];
+    for (var m = 0; m < 12; m++) months.push(m);
+
+    var block = document.createElement("div");
+    block.className = "sprint-block";
+    block.style.gridTemplateRows = "auto repeat(" + months.length + ", 56px)";
+
+    var divider = document.createElement("div");
+    divider.className = "sprint-divider";
+    divider.textContent = year + " год";
+    block.appendChild(divider);
+
+    var todayDate = Roster.fromISO(DATA.today);
+    months.forEach(function (m, idx) {
+      var isCurrent = todayDate.getFullYear() === year && todayDate.getMonth() === m;
+      var cell = document.createElement("div");
+      cell.className = "date-cell" + (isCurrent ? " is-today" : "");
+      cell.style.gridColumn = "1";
+      cell.style.gridRow = (idx + 2) + "";
+      cell.innerHTML = '<span class="num">' + MONTHS_NOM[m] + '</span>' + (isCurrent ? '<span class="today-chip">Тек.</span>' : "");
+      block.appendChild(cell);
+    });
+
+    columns.forEach(function (col, colIdx) {
+      months.forEach(function (m, idx) {
+        var mm = String(m + 1).padStart(2, "0");
+        var monthStart = year + "-" + mm + "-01";
+        var monthEnd = year + "-" + mm + "-" + String(new Date(year, m + 1, 0).getDate()).padStart(2, "0");
+
+        var cell = document.createElement("div");
+        cell.className = "agg-cell clickable";
+        cell.style.gridColumn = (colIdx + 2) + "";
+        cell.style.gridRow = (idx + 2) + "";
+        cell.tabIndex = 0;
+        cell.setAttribute("role", "button");
+
+        var people = Roster.peopleInRange(filteredDuties, peopleById, col.deptId, monthStart, monthEnd, col.groupId);
+        if (people.length === 0) {
+          cell.innerHTML = '<span class="empty-dash">—</span>';
+          cell.setAttribute("aria-label", columnLabel(col) + ", " + MONTHS_NOM[m] + " " + year + ", дежурств нет. Перейти к спринтам.");
+        } else {
+          // колонка месяца уже недельной — показываем меньше аватаров,
+          // чтобы не вылезать за пределы узкой ячейки
+          var shown = people.slice(0, 2);
+          var html = shown.map(function (p) {
+            return Roster.avatarHtml(p, "avatar-sm", ' data-person-id="' + p.id + '"', p.isLead);
+          }).join("");
+          if (people.length > 2) html += '<span class="agg-more">+' + (people.length - 2) + '</span>';
+          cell.innerHTML = html;
+          var names = people.map(function (p) { return p.fullName + " (" + p.weekDays + " дн.)"; }).join(", ");
+          cell.dataset.tooltip = names;
+          cell.setAttribute("aria-label", columnLabel(col) + ", " + MONTHS_NOM[m] + " " + year + ": " + names + ". Перейти к спринтам.");
+        }
+        cell.addEventListener("click", function () { jumpToMonth(year, m); });
+        cell.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jumpToMonth(year, m); } });
+        block.appendChild(cell);
+      });
+    });
+
+    container.appendChild(block);
+  }
+
+  render();
+
+  Roster.enableTooltips(document.body);
+  Roster.initSprintSummaryModal(document.getElementById("scrollArea"), {
+    sprints: DATA.sprints,
+    getContext: function () { return lastRenderContext; }
+  });
+
+  // autoscroll to today on load (только в режиме "Спринты")
+  requestAnimationFrame(scrollToToday);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,641 @@
+/* ============================================================================
+ * Общие стили: токены Untitled UI, аватары, карточка дежурства, табы, бейджи.
+ * ==========================================================================*/
+
+:root {
+  --gray-25: #FCFCFD;
+  --gray-50: #F9FAFB;
+  --gray-100: #F2F4F7;
+  --gray-200: #EAECF0;
+  --gray-300: #D0D5DD;
+  --gray-500: #667085;
+  --gray-600: #475467;
+  --gray-700: #344054;
+  --gray-900: #101828;
+
+  --brand-25: #F9F5FF;
+  --brand-50: #F4EBFF;
+  --brand-100: #E9D7FE;
+  --brand-300: #D6BBFB;
+  --brand-600: #7F56D9;
+  --brand-700: #6941C6;
+
+  --success-50: #ECFDF3;
+  --success-700: #027A48;
+  --error-500: #F04438;
+  --error-50: #FEF3F2;
+
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.10), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+/* [hidden] must win over component classes like .icon-btn/.heat-legend that
+   set their own `display` — equal specificity would otherwise let the
+   later author rule (display:flex etc.) override the UA `display:none`. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--gray-700);
+  background: var(--gray-25);
+  min-width: 1280px;
+}
+
+button, select, input {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+a { color: inherit; }
+
+/* focus ring, WCAG-visible */
+:focus-visible {
+  outline: 2px solid var(--brand-300);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Page chrome ---------- */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--gray-200);
+  background: #fff;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title-block { display: flex; align-items: baseline; gap: 12px; }
+
+.page-title {
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.today-count {
+  font-size: 14px;
+  color: var(--gray-500);
+}
+.today-count strong { color: var(--brand-700); font-weight: 600; }
+
+.header-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- Tabs (underline) ---------- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 24px;
+  background: #fff;
+}
+.tab-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 4px;
+  margin: 0 12px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-500);
+  cursor: pointer;
+}
+.tab-btn:hover { color: var(--gray-700); }
+.tab-btn[aria-selected="true"] {
+  color: var(--brand-700);
+  border-bottom-color: var(--brand-600);
+}
+
+/* ---------- Buttons / button group ---------- */
+
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gray-300);
+  background: #fff;
+  color: var(--gray-700);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+}
+.btn:hover { background: var(--gray-50); }
+.btn.btn-brand {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: #fff;
+}
+.btn.btn-brand:hover { background: var(--brand-700); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-group {
+  display: inline-flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--gray-300);
+  box-shadow: var(--shadow-xs);
+}
+.btn-group .btn {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  border-right: 1px solid var(--gray-300);
+}
+.btn-group .btn:last-child { border-right: none; }
+.btn-group .btn[aria-pressed="true"] {
+  background: var(--brand-50);
+  color: var(--brand-700);
+}
+
+.icon-btn {
+  appearance: none;
+  border: 1px solid var(--gray-300);
+  background: #fff;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gray-500);
+}
+.icon-btn:hover { background: var(--gray-50); color: var(--gray-700); }
+
+/* ---------- Dropdown / multiselect ---------- */
+
+.dropdown { position: relative; }
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 8px;
+  min-width: 240px;
+  display: none;
+}
+.dropdown.open .dropdown-panel { display: block; }
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--gray-700);
+}
+.dropdown-item:hover { background: var(--gray-50); }
+.dropdown-item input { accent-color: var(--brand-600); width: 16px; height: 16px; }
+/* Группа внутри департамента (напр. Поддержка -> МПК) — с отступом и чуть
+   мельче; когда сам департамент выключен, группы недоступны для клика,
+   но остаются в своём предыдущем состоянии (не сбрасываются). */
+.dropdown-item.is-group {
+  padding-left: 30px;
+  font-size: 13px;
+  color: var(--gray-600);
+}
+.dropdown-item.is-group.is-disabled {
+  color: var(--gray-300);
+  cursor: not-allowed;
+}
+.dropdown-item.is-group.is-disabled:hover { background: none; }
+
+/* ---------- Badge ---------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.badge-success { background: var(--success-50); color: var(--success-700); }
+.badge-brand { background: var(--brand-50); color: var(--brand-700); }
+.badge-gray { background: var(--gray-100); color: var(--gray-600); }
+
+/* ---------- Avatar ---------- */
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-weight: 600;
+  flex: none;
+  border: 1.5px solid rgba(255,255,255,.7);
+}
+.avatar-sm { width: 24px; height: 24px; font-size: 10px; }
+.avatar-md { width: 28px; height: 28px; font-size: 11px; }
+
+/* лид/ответственный: золотое кольцо + бейдж-звезда */
+.avatar.is-lead {
+  box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px #F79009;
+}
+/* "не вся неделя" в агрегированной ячейке "Квартал" — часть срока закрыл
+   другой человек (подмена/передача дежурства). Пунктир — доп. носитель
+   информации помимо цвета/тултипа (WCAG: не только цвет). */
+.avatar.is-partial {
+  border: 1.5px dashed var(--gray-400);
+}
+.avatar.is-lead .lead-badge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 11px;
+  height: 11px;
+  color: #F79009;
+  background: #fff;
+  border-radius: 50%;
+  padding: 1px;
+  box-sizing: border-box;
+  filter: drop-shadow(0 1px 1px rgba(16,24,40,.25));
+}
+
+.avatar-stack { display: flex; align-items: center; }
+.avatar-stack .avatar { margin-left: -8px; }
+.avatar-stack .avatar:first-child { margin-left: 0; }
+
+/* ---------- Sprint summary modal ---------- */
+
+/* Заголовок/группа спринта, по клику на которую открывается модалка —
+   .sprint-divider (вариант 1) и .sprint-head-cell (вариант 2) получают
+   этот класс дополнительно к своим собственным стилям layout'а. */
+.sprint-clickable {
+  cursor: pointer;
+}
+.sprint-clickable:hover {
+  background: var(--brand-25) !important;
+}
+.sprint-clickable:focus-visible {
+  outline: 2px solid var(--brand-300);
+  outline-offset: -2px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 24, 40, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md), 0 12px 32px rgba(16, 24, 40, .25);
+  width: 100%;
+  max-width: 760px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-200);
+  flex: none;
+}
+.modal-title { font-size: 16px; font-weight: 600; margin: 0; color: var(--gray-900); }
+.modal-close {
+  appearance: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  font-size: 18px;
+  line-height: 1;
+  flex: none;
+}
+.modal-close:hover { background: var(--gray-100); color: var(--gray-700); }
+.modal-body {
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+}
+
+.ss-modal-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; }
+.ss-sprint-id { font-weight: 700; color: var(--brand-700); }
+.ss-sprint-range { font-weight: 400; color: var(--gray-500); }
+.ss-totals {
+  font-size: 13px;
+  color: var(--gray-700);
+  background: var(--gray-25);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.ss-totals strong { color: var(--gray-900); }
+
+.ss-chevron { width: 16px; height: 16px; color: var(--gray-500); flex: none; transition: transform .15s; }
+.ss-dept-toggle[aria-expanded="false"] .ss-chevron { transform: rotate(-90deg); }
+
+.ss-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ss-dept {
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ss-dept-toggle {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--gray-25);
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  flex-wrap: wrap;
+}
+.ss-dept-toggle:hover { background: var(--gray-50); }
+.ss-dept-toggle .ss-chevron { width: 14px; height: 14px; }
+.ss-dept-name { font-weight: 600; color: var(--gray-700); min-width: 150px; }
+.ss-dept-count { color: var(--gray-500); font-size: 12px; white-space: nowrap; }
+.ss-dept-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.ss-stat {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  white-space: nowrap;
+}
+.ss-stat-night { background: var(--gray-900); color: #fff; }
+.ss-stat-weekend { background: var(--brand-50); color: var(--brand-700); border: 1px dashed var(--brand-300); }
+.ss-stat-empty { background: transparent; color: var(--gray-300); }
+
+.ss-dept-employees {
+  padding: 8px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--gray-100);
+  background: #fff;
+}
+.ss-employee { display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap; }
+.ss-employee-name { font-weight: 500; color: var(--gray-700); min-width: 150px; }
+.ss-employee-meta { color: var(--gray-500); font-size: 12px; }
+.ss-empty { color: var(--gray-300); font-size: 13px; padding: 4px 0; }
+
+/* ---------- Tooltip (custom, заменяет нативный title) ---------- */
+
+.rt-tooltip {
+  position: absolute;
+  z-index: 300;
+  background: var(--gray-900);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  padding: 6px 10px;
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  white-space: pre-line;
+  max-width: 240px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(2px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.rt-tooltip.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
+.rt-tooltip::after {
+  content: "";
+  position: absolute;
+  left: var(--rt-arrow-left, 50%);
+  width: 8px;
+  height: 8px;
+  background: var(--gray-900);
+  transform: translateX(-50%) rotate(45deg);
+}
+.rt-tooltip[data-placement="top"]::after { bottom: -4px; }
+.rt-tooltip[data-placement="bottom"]::after { top: -4px; }
+@media (prefers-reduced-motion: reduce) {
+  .rt-tooltip { transition: none; }
+}
+
+/* ---------- Duty card ---------- */
+
+.duty-card {
+  border-radius: 8px;
+  border-left: 3px solid var(--card-color, var(--brand-600));
+  background: var(--card-bg, var(--brand-25));
+  color: var(--gray-700);
+  cursor: default;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 5px 6px;
+  transition: box-shadow .12s ease, opacity .12s ease, filter .12s ease;
+  /* Даёт карточке возможность подстроиться под СВОЮ реальную ширину (а не
+     только под длительность дежурства) — когда лейнов много и колонка
+     department'а сжимается, имя/дату всё равно некуда впихнуть читаемо. */
+  container-type: inline-size;
+  container-name: dutycard;
+}
+/* Слишком узко для имени+даты — прячем текст, оставляем только аватар,
+   имя/дата/тип смены остаются доступны через тултип при наведении. */
+@container dutycard (max-width: 60px) {
+  .duty-card:not(.compact) { justify-content: center; padding: 3px; }
+  .duty-card:not(.compact) .dc-body { display: none; }
+}
+.duty-card.compact { align-items: center; }
+@media (prefers-reduced-motion: reduce) {
+  .duty-card { transition: none; }
+}
+.duty-card:hover, .duty-card:focus-visible, .duty-card.is-highlight {
+  box-shadow: var(--shadow-md);
+  z-index: 5;
+}
+.duty-card.is-dimmed { opacity: .4; }
+
+.duty-card.shift-night {
+  background: var(--card-bg-night, #3B3B4F);
+  color: #F2F4F7;
+  border-left-color: var(--card-color, var(--brand-300));
+}
+.duty-card.shift-weekend {
+  border-style: dashed;
+  border: 1.5px dashed var(--card-color, var(--brand-600));
+  border-left-width: 4px;
+}
+
+.duty-card .dc-avatar { flex: none; }
+.duty-card .dc-body { min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+.duty-card .dc-name {
+  font-size: 12px;
+  line-height: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.duty-card .dc-range {
+  font-size: 11px;
+  line-height: 13px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+.duty-card.shift-night .dc-range { color: #C0C4D6; }
+.duty-card .dc-moon {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  color: #F4EBFF;
+}
+.duty-card.compact { justify-content: center; padding: 3px; }
+.duty-card.compact .dc-body { display: none; }
+
+/* empty state dash */
+.empty-dash {
+  color: var(--gray-300);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  user-select: none;
+}
+
+/* weekend day styling shared */
+.is-weekend-label { color: var(--error-500); }
+
+/* ---------- filters bar (zoom switcher / nav / period label) ---------- */
+
+.filters-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--gray-200);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.filters-left, .filters-right { display: flex; align-items: center; gap: 10px; }
+.period-label { font-size: 14px; font-weight: 600; color: var(--gray-900); min-width: 160px; text-align: center; }
+
+/* ---------- quarter / year aggregate cells (shared by both variants) --- */
+
+.agg-cell {
+  position: relative;
+  border-left: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  cursor: default;
+  overflow: hidden;
+}
+.agg-cell.clickable { cursor: pointer; }
+.agg-cell.clickable:hover { background: var(--brand-25); }
+.agg-more {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  border-radius: 9999px;
+  padding: 1px 6px;
+}
+.heat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.heat-cell .heat-unit {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  opacity: .8;
+}
+.heat-0 { background: transparent; color: var(--gray-300); }
+.heat-1 { background: var(--brand-25); color: var(--brand-700); }
+.heat-2 { background: var(--brand-50); color: var(--brand-700); }
+.heat-3 { background: var(--brand-100); color: var(--brand-700); }
+.heat-4 { background: var(--brand-300); color: #3B1D6B; }
+
+.heat-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--gray-500);
+  padding: 8px 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--gray-200);
+  flex-wrap: wrap;
+}
+.heat-legend .swatch {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 3px;
+}

@@ -76,26 +76,34 @@
   // Поддержки) — для примера, как это выглядит в UI. ФИО — условные.
   // Дежурят по очереди сменами разной длины (см. generateRotation ниже) —
   // ответственный (duty.lead) это тот, чья смена сейчас идёт, а не
-  // постоянная роль персоны.
+  // постоянная роль персоны. grade (Senior/Middle) — наоборот, статичный
+  // атрибут персоны, не меняется от смены к смене.
   var people = [
-    { id: "p1", fullName: "Волкова А.С.", initials: "ВА", departmentId: "management" },
-    { id: "p2", fullName: "Петров Д.И.", initials: "ПД", departmentId: "management" },
+    { id: "p1", fullName: "Волкова А.С.", initials: "ВА", departmentId: "management", grade: "Senior" },
+    { id: "p2", fullName: "Петров Д.И.", initials: "ПД", departmentId: "management", grade: "Middle" },
 
     // Backend: день — обязательно, ночь — дополнительно (пример).
-    { id: "p5", fullName: "Морозов К.А.", initials: "МК", departmentId: "backend" },
-    { id: "p6", fullName: "Лебедева Т.Н.", initials: "ЛТ", departmentId: "backend" },
-    { id: "p7", fullName: "Захаров И.О.", initials: "ЗИ", departmentId: "backend" },
-    { id: "p8", fullName: "Кузьмина В.Р.", initials: "КВ", departmentId: "backend" },
+    { id: "p5", fullName: "Морозов К.А.", initials: "МК", departmentId: "backend", grade: "Senior" },
+    { id: "p6", fullName: "Лебедева Т.Н.", initials: "ЛТ", departmentId: "backend", grade: "Middle" },
+    { id: "p7", fullName: "Захаров И.О.", initials: "ЗИ", departmentId: "backend", grade: "Senior" },
+    { id: "p8", fullName: "Кузьмина В.Р.", initials: "КВ", departmentId: "backend", grade: "Middle" },
 
     // Поддержка / МПК
-    { id: "p9", fullName: "Романов С.Д.", initials: "РС", departmentId: "support", groupId: "mpk" },
-    { id: "p10", fullName: "Фомина А.П.", initials: "ФА", departmentId: "support", groupId: "mpk" },
+    { id: "p9", fullName: "Романов С.Д.", initials: "РС", departmentId: "support", groupId: "mpk", grade: "Senior" },
+    { id: "p10", fullName: "Фомина А.П.", initials: "ФА", departmentId: "support", groupId: "mpk", grade: "Middle" },
     // Поддержка / ПСУ
-    { id: "p11", fullName: "Беляев М.Т.", initials: "БМ", departmentId: "support", groupId: "psu" },
-    { id: "p12", fullName: "Орлова Н.К.", initials: "ОН", departmentId: "support", groupId: "psu" },
-    // Поддержка / Хумо
-    { id: "p13", fullName: "Тарасов Е.В.", initials: "ТЕ", departmentId: "support", groupId: "humo" },
-    { id: "p14", fullName: "Никитина Ю.Л.", initials: "НЮ", departmentId: "support", groupId: "humo" },
+    { id: "p11", fullName: "Беляев М.Т.", initials: "БМ", departmentId: "support", groupId: "psu", grade: "Senior" },
+    { id: "p12", fullName: "Орлова Н.К.", initials: "ОН", departmentId: "support", groupId: "psu", grade: "Middle" },
+    // Поддержка / Хумо — многолюдная группа (4–7 дежурных одновременно),
+    // для проверки компактного режима с коллапсом в варианте 3.
+    { id: "p13", fullName: "Тарасов Е.В.", initials: "ТЕ", departmentId: "support", groupId: "humo", grade: "Senior" },
+    { id: "p14", fullName: "Никитина Ю.Л.", initials: "НЮ", departmentId: "support", groupId: "humo", grade: "Middle" },
+    { id: "p19", fullName: "Ковалёв С.А.", initials: "КС", departmentId: "support", groupId: "humo", grade: "Middle" },
+    { id: "p20", fullName: "Ситдикова А.Р.", initials: "СР", departmentId: "support", groupId: "humo", grade: "Senior" },
+    { id: "p21", fullName: "Ермаков Д.В.", initials: "ЕД", departmentId: "support", groupId: "humo", grade: "Middle" },
+    { id: "p22", fullName: "Хасанова Л.М.", initials: "ХЛ", departmentId: "support", groupId: "humo", grade: "Middle" },
+    { id: "p23", fullName: "Богданов П.Е.", initials: "БП", departmentId: "support", groupId: "humo", grade: "Senior" },
+    { id: "p24", fullName: "Мельникова И.С.", initials: "МИ", departmentId: "support", groupId: "humo" },
     // Поддержка / Узкард: день — обязательно, ночь — дополнительно (пример).
     { id: "p15", fullName: "Григорьев А.Н.", initials: "ГА", departmentId: "support", groupId: "uzcard" },
     { id: "p16", fullName: "Семенова О.И.", initials: "СО", departmentId: "support", groupId: "uzcard" },
@@ -153,14 +161,57 @@
     }
   }
 
-  generateRotation(["p1", "p2"], "day", 0);     // Аппарат управления
-  generateRotation(["p5", "p6"], "day", 1);     // Backend — день
-  generateRotation(["p7", "p8"], "night", 2);   // Backend — ночь (доп.)
-  generateRotation(["p9", "p10"], "day", 3);    // Поддержка / МПК
-  generateRotation(["p11", "p12"], "day", 4);   // Поддержка / ПСУ
-  generateRotation(["p13", "p14"], "day", 5);   // Поддержка / Хумо
-  generateRotation(["p15", "p16"], "day", 6);   // Поддержка / Узкард — день
-  generateRotation(["p17", "p18"], "night", 7); // Поддержка / Узкард — ночь (доп.)
+  // Разрежённый график — дежурит ОДИН человек за раз, между сменами
+  // разрывы 1–3 дня, когда не назначен никто (дни с 0 дежурных).
+  // Пример для компактного режима варианта 3: у продукта могут быть
+  // "дырки" в покрытии, и это должно быть видно счётчиком "0".
+  function generateSparseRotation(members, shift, seed) {
+    var rangeEnd = fromISO(sprints[sprints.length - 1].end);
+    var cursor = fromISO(sprints[0].start);
+    var lenIdx = seed;
+    var memberIdx = 0;
+    while (cursor <= rangeEnd) {
+      var len = STINT_LENGTHS[lenIdx % STINT_LENGTHS.length];
+      var end = addDays(cursor, len - 1);
+      if (end > rangeEnd) end = rangeEnd;
+      addDutyRange(members[memberIdx % members.length], toISO(cursor), toISO(end), shift, true);
+      var gap = 1 + ((lenIdx + seed) % 3); // 1..3 пустых дня между сменами
+      cursor = addDays(end, gap + 1);
+      memberIdx++;
+      lenIdx++;
+    }
+  }
+
+  // Многолюдная группа: каждый участник дежурит своими отрезками с паузами
+  // (разная фаза старта и разный ритм), отрезки перекрываются — в один день
+  // выходит 4–7 человек одновременно. Пример нагрузки для варианта 3.
+  function generateCrowd(members, shift, seed) {
+    var rangeStart = fromISO(sprints[0].start);
+    var rangeEnd = fromISO(sprints[sprints.length - 1].end);
+    members.forEach(function (personId, mi) {
+      var lenIdx = seed + mi;
+      var cursor = mi === 0 ? rangeStart : addDays(rangeStart, (mi * 3 + seed) % 7);
+      var lead = mi === 0; // условный старший группы — лид на своих отрезках
+      while (cursor <= rangeEnd) {
+        var len = STINT_LENGTHS[lenIdx % STINT_LENGTHS.length];
+        var end = addDays(cursor, len - 1);
+        if (end > rangeEnd) end = rangeEnd;
+        addDutyRange(personId, toISO(cursor), toISO(end), shift, lead);
+        var gap = 2 + ((lenIdx * 2 + mi) % 5); // 2..6 дней отдыха
+        cursor = addDays(end, gap + 1);
+        lenIdx++;
+      }
+    });
+  }
+
+  generateRotation(["p1", "p2"], "day", 0);       // Аппарат управления
+  generateRotation(["p5", "p6"], "day", 1);       // Backend — день
+  generateRotation(["p7", "p8"], "night", 2);     // Backend — ночь (доп.)
+  generateRotation(["p9", "p10"], "day", 3);      // Поддержка / МПК
+  generateSparseRotation(["p11", "p12"], "day", 4); // Поддержка / ПСУ — с пустыми днями
+  generateCrowd(["p13", "p14", "p19", "p20", "p21", "p22", "p23", "p24"], "day", 5); // Поддержка / Хумо — 4-7 чел/день
+  generateRotation(["p15", "p16"], "day", 6);     // Поддержка / Узкард — день
+  generateRotation(["p17", "p18"], "night", 7);   // Поддержка / Узкард — ночь (доп.)
 
   window.DATA = {
     today: TODAY_ISO,

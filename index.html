@@ -3,20 +3,165 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>График дежурств — Вариант 2 (департаменты × даты)</title>
+<title>График дежурств — Вариант 3 (кластеры × даты, компакт)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="common.css">
 <style>
+  /* Вариант 3 стилизован под прод-систему (Fido-Biznes "Ресурсы"): Roboto,
+     голубые колонки выходных, жёлтые счётчики часов/людей, оранжевая рамка
+     "сегодня", плоские цветные бары вместо карточек с обводкой. */
+  :root {
+    --font-sans: "Roboto", -apple-system, "Segoe UI", Arial, sans-serif;
+    --shell-bg: #4a4a4a;
+    --panel-border: #d9dce2;
+    --panel-shadow: 0 2px 10px rgba(16, 24, 40, 0.14);
+    --label-col-w: 350px;
+    --day-w-fixed: 48.25px;
+  }
+
   html, body { height: 100%; overflow: hidden; }
-  body { display: flex; flex-direction: column; }
+  body {
+    display: flex;
+    flex-direction: column;
+    background: var(--shell-bg);
+  }
+
+  .app-shell {
+    width: min(1920px, calc(100vw - 40px));
+    margin: 20px auto;
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    background: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  }
+
+  .app-rail {
+    background: #fff;
+    border-right: 1px solid #e7e7e7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 0;
+  }
+  .rail-burger {
+    width: 18px;
+    height: 14px;
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .rail-burger::before,
+  .rail-burger::after,
+  .rail-burger span {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: 999px;
+    background: #7b7b7b;
+  }
+  .rail-burger::before { top: 0; }
+  .rail-burger span { top: 6px; }
+  .rail-burger::after { bottom: 0; }
+  .rail-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid #d7d7d7;
+    background: linear-gradient(180deg, #fff, #f4f4f4);
+    position: relative;
+  }
+  .rail-dot.is-active::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 3px;
+    background: #7aa8ff;
+  }
+
+  .app-main {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fbfbfb;
+  }
+
+  .app-topbar {
+    height: 40px;
+    background: #fff;
+    border-bottom: 1px solid #ebebeb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+  }
+  .brand {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2161c2;
+  }
+  .brand span { color: #f79009; }
+  .topbar-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .topbar-icons i {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #aeb4bf;
+    display: inline-block;
+    background: #fff;
+  }
+  .topbar-icons i.is-orange { border-color: #f79009; }
+  .topbar-icons i.is-blue { border-color: #84a9ff; background: #eef4ff; }
+  .topbar-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #d5dae3, #9aa4b5);
+  }
+
+  .workspace {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px;
+  }
+
+  .screen-card {
+    min-width: 1702px;
+    background: #fff;
+    border: 1px solid var(--panel-border);
+    border-radius: 2px;
+    box-shadow: var(--panel-shadow);
+  }
+
+  .screen-header {
+    padding: 10px 12px 0;
+  }
+  .screen-title {
+    margin: 0;
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 500;
+    color: #5b5f67;
+  }
 
   .tl-wrap {
     flex: 1;
     overflow: auto;
     position: relative;
-    background: var(--gray-25);
+    background: #fff;
+    min-height: 540px;
   }
 
   .tl-grid {
@@ -36,9 +181,9 @@
     grid-row: 1 / span 2;
     display: flex;
     align-items: flex-end;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 400;
     color: var(--gray-500);
   }
   .sprint-head-cell {
@@ -50,12 +195,12 @@
     border-left: 1px solid var(--gray-200);
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--gray-700);
-    height: 34px;
+    gap: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #4f5560;
+    height: 20px;
     overflow: hidden;
     white-space: nowrap;
   }
@@ -67,104 +212,125 @@
     border-bottom: 1px solid var(--gray-200);
     border-left: 1px solid var(--gray-100);
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    color: var(--gray-500);
-    height: 40px;
-    line-height: 13px;
+    font-size: 10px;
+    font-weight: 400;
+    color: #6a6f78;
+    height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
   }
-  .day-head-cell .dnum { font-size: 13px; font-weight: 600; color: var(--gray-700); }
-  .day-head-cell.is-weekend { background: var(--gray-50); }
-  .day-head-cell.is-weekend .dnum { color: var(--error-500); }
-  .day-head-cell.is-today .dnum {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--brand-600);
-    color: #fff;
-  }
-  .day-head-cell.is-current-period {
-    background: var(--brand-25);
-  }
-  .day-head-cell.is-current-period .dnum {
-    color: var(--brand-700);
+  .day-head-cell.is-weekend { background: #DBEAF7; }
+  .day-head-cell.is-weekend .d-num { color: var(--error-500); }
+  .day-head-cell.is-today {
+    background: #FFEAD5;
+    border-left: 2px solid #F79009;
+    border-right: 2px solid #F79009;
+    font-weight: 700;
   }
 
-  .today-line {
+  /* Колонка "сегодня" — две оранжевые вертикали, как в проде */
+  .today-col {
     position: absolute;
     top: 0;
-    width: 2px;
-    background: var(--brand-300);
+    border-left: 2px solid #F79009;
+    border-right: 2px solid #F79009;
     z-index: 4;
     pointer-events: none;
+    box-sizing: border-box;
   }
 
-  /* department rows */
-  .dept-label-cell {
+  /* --- строка-кластер --- */
+  .cluster-row {
+    background: #fff;
+    border-bottom: 1px solid var(--gray-200);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #4b4f56;
+  }
+  .cluster-row .cluster-label {
+    position: sticky;
+    left: 0;
+    padding: 2px 8px;
+  }
+
+  /* --- строка-продукт --- */
+  .product-label {
     position: sticky;
     left: 0;
     z-index: 3;
     background: #fff;
     border-right: 1px solid var(--gray-200);
     border-bottom: 1px solid var(--gray-100);
-    padding: 8px 12px;
+    padding: 0 8px;
     display: flex;
     align-items: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--gray-700);
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 400;
+    color: #5a6069;
+    cursor: pointer;
+    user-select: none;
   }
-  /* Строка-названия группы внутри департамента (напр. "Поддержка" -> МПК) —
-     чуть светлее и с отступом, сама строка идёт ПОСЛЕ .dept-section-row. */
-  .dept-label-cell.is-group {
-    padding-left: 24px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--gray-600);
+  .product-label:hover { background: var(--gray-25); }
+  .product-label.is-nested { padding-left: 12px; }
+  .product-label .p-chev {
+    width: 10px; height: 10px;
+    color: #55a860;
+    flex: none;
+    transition: transform .15s;
   }
-  /* Строка-заголовок департамента, у которого есть группы — во всю ширину
-     таблицы, сразу над строками его групп (см. Roster.buildColumns). */
-  /* Сам бар — на всю ширину грида (не sticky, иначе поедет и разъедется с
-     колонками дат под ним при горизонтальном скролле). А вот подпись внутри
-     него должна оставаться в поле зрения при скролле — она sticky. */
-  .dept-section-row {
-    background: var(--gray-50);
-    border-bottom: 1px solid var(--gray-200);
-    border-top: 1px solid var(--gray-200);
-    display: flex;
-    align-items: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--gray-700);
+  .product-label .p-team {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #7bc67e;
+    flex: none;
   }
-  .dept-section-row .dept-section-label {
-    position: sticky;
-    left: 0;
-    padding: 4px 12px;
+  .product-label[aria-expanded="false"] .p-chev { transform: rotate(-90deg); }
+  .product-label .p-count {
+    margin-left: auto;
+    font-size: 10px;
+    color: #6d7480;
+    white-space: nowrap;
   }
-  .dept-body-cell {
+  @media (prefers-reduced-motion: reduce) { .product-label .p-chev { transition: none; } }
+
+  .product-body {
     position: relative;
     border-bottom: 1px solid var(--gray-100);
     background: #fff;
+    cursor: pointer;
   }
-  .dept-body-cell .col-bg {
+  .product-body.is-expanded { cursor: default; }
+  .product-body .col-bg {
     position: absolute;
     top: 0; bottom: 0;
     border-left: 1px solid var(--gray-100);
   }
-  .dept-body-cell .col-bg.weekend { background: var(--gray-25); }
+  .product-body .col-bg.weekend { background: #E9F2FB; }
 
-  .dept-body-cell .duty-card {
+  /* Счётчик дежурных — жёлтые ячейки во всю клетку, как часы в проде */
+  .count-cell {
     position: absolute;
+    top: 1px; bottom: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 400;
+    border-radius: 0;
     box-sizing: border-box;
-    height: 40px;
   }
+  .count-cell.c-some { background: #FFF9C0; color: #6b5b0e; }
+  .count-cell.c-many { background: #FDE272; color: #5c470a; }
+  .count-cell.c-zero { background: #FDDCDB; color: #b42318; }
 
-  .dept-body-cell .empty-dash-abs {
+  .product-body .empty-dash-abs {
     position: absolute;
     top: 0; bottom: 0;
     display: flex;
@@ -172,48 +338,343 @@
     justify-content: center;
   }
 
+  /* --- строка-заголовок продукта: только фон колонок (+ счётчики, если
+     продукт свёрнут); бары/люди рендерятся ниже, по одному человеку на
+     строку --- */
+  .row-header-body { position: relative; border-bottom: 1px solid var(--gray-100); }
+  .row-header-body .col-bg { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--gray-100); }
+  .row-header-body .col-bg.weekend { background: #E9F2FB; }
+
+  /* --- строка-человек: 1 человек = 1 строка, как в проде --- */
+  .lane-spacer {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: #fff;
+    border-right: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .event-lane {
+    position: relative;
+    border-bottom: 1px solid var(--gray-100);
+    background: #fff;
+  }
+
+  .event-lane .col-bg { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--gray-100); }
+  .event-lane .col-bg.weekend { background: #E9F2FB; }
+  .event-lane .duty-card {
+    position: absolute;
+    box-sizing: border-box;
+    top: 2px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border: 1px solid var(--card-color);
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: none;
+    padding: 6px 7px;
+    gap: 6px;
+  }
+  .event-lane .duty-card .dc-moon { width: 11px; height: 11px; color: var(--card-color); }
+  .event-lane .duty-card.shift-night { background: #f8f6ff; color: var(--gray-700); }
+  .event-lane .duty-card.shift-weekend {
+    background: #fffdf2;
+    border-style: dashed;
+  }
+  .event-lane .duty-card:hover,
+  .event-lane .duty-card:focus-visible,
+  .event-lane .duty-card.is-highlight { box-shadow: var(--shadow-md); }
+  .event-lane .duty-card.is-dimmed { opacity: .35; }
+  .event-lane .duty-card .dc-name {
+    font-size: 11px;
+    line-height: 13px;
+    color: #40454f;
+  }
+  .event-lane .duty-card .dc-range {
+    font-size: 10px;
+    line-height: 12px;
+    color: #757b87;
+  }
+  .event-lane .duty-card.compact {
+    justify-content: center;
+    padding: 4px;
+  }
+
+  /* --- форма "Дежурство" --- */
+  .form-field { margin-bottom: 12px; }
+  .form-field > label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+  }
+  .form-field > label .req { color: var(--error-500); }
+  .form-field select,
+  .form-field input[type="date"],
+  .form-field input[type="search"] {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--gray-900);
+    background: #fff;
+  }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-field { flex: 1; }
+  .duty-people-list {
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 4px;
+  }
+  .duty-person-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--gray-900);
+    cursor: pointer;
+  }
+  .duty-person-row:hover { background: var(--gray-50); }
+  .duty-person-row input { accent-color: var(--brand-600); width: 16px; height: 16px; }
+  .duty-people-empty { padding: 10px; font-size: 13px; color: var(--gray-400); }
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 20px 16px;
+    border-top: 1px solid var(--gray-200);
+    flex: none;
+  }
+  .form-error { color: var(--error-500); font-size: 13px; margin-right: auto; align-self: center; }
+
+  .filters-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 8px 12px 10px;
+    background: #fff;
+    border-bottom: 1px solid var(--gray-200);
+    flex-wrap: wrap;
+  }
+  .filters-left,
+  .filters-right {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 180px;
+  }
+  .field-label {
+    font-size: 10px;
+    line-height: 14px;
+    color: #6f7681;
+  }
+  .field-label .req { color: var(--error-500); }
+  .field-meta {
+    color: #8a909a;
+    margin-left: auto;
+    padding-left: 8px;
+    font-size: 10px;
+  }
+  .select-like {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 200px;
+    height: 27px;
+    padding: 0 8px;
+    border: 1px solid #d8dbe1;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #fff, #fafafa);
+    color: #4d535c;
+    font-size: 11px;
+    font-weight: 400;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    position: relative;
+  }
+  .select-like::after {
+    content: "\25BE";
+    color: #7d838d;
+    font-size: 9px;
+    margin-left: 12px;
+  }
+  .select-like[aria-disabled="true"] {
+    cursor: default;
+  }
+  .period-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 27px;
+    margin-bottom: 0;
+  }
+  .compact-nav {
+    width: 27px;
+    height: 27px;
+    border-radius: 2px;
+    box-shadow: none;
+    color: #6b7280;
+  }
+  .period-label {
+    min-width: 220px;
+    height: 27px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #555b65;
+    border: 1px solid #d8dbe1;
+    border-radius: 2px;
+    background: #fff;
+    padding: 0 10px;
+    box-sizing: border-box;
+  }
+  .btn.btn-quiet,
+  .btn.btn-ghost {
+    height: 27px;
+    padding: 0 8px;
+    font-size: 10px;
+    font-weight: 400;
+    border-radius: 2px;
+    box-shadow: none;
+  }
+  .btn.btn-quiet {
+    background: #f5f6f7;
+    border-color: #d7dbe2;
+    color: #6c737f;
+  }
+  .today-count {
+    height: 27px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    color: #68707b;
+    white-space: nowrap;
+  }
+  .today-count strong { color: #445062; }
+
+  .dropdown-panel {
+    min-width: 220px;
+    border-radius: 2px;
+    padding: 6px;
+  }
+  .dropdown-item {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  .dropdown-item.is-group {
+    padding-left: 26px;
+    font-size: 11px;
+  }
 </style>
 </head>
 <body>
 
-<header class="page-header">
-  <div class="page-title-block">
-    <h1 class="page-title">График дежурств</h1>
-    <span class="badge badge-gray">Вариант 2 · департаменты × даты</span>
-  </div>
-</header>
+<div class="app-shell">
+  <aside class="app-rail" aria-hidden="true">
+    <div class="rail-burger"><span></span></div>
+    <div class="rail-dot"></div>
+    <div class="rail-dot is-active"></div>
+    <div class="rail-dot"></div>
+    <div class="rail-dot"></div>
+    <div class="rail-dot"></div>
+    <div class="rail-dot"></div>
+    <div class="rail-dot"></div>
+    <div class="rail-dot"></div>
+    <div class="rail-dot"></div>
+    <div class="rail-dot"></div>
+  </aside>
 
-<nav class="tabs" role="tablist" aria-label="Фильтр по типу смены" id="shiftTabs">
-  <button class="tab-btn" role="tab" aria-selected="true" data-shift="all">Все</button>
-  <button class="tab-btn" role="tab" aria-selected="false" data-shift="day">Дневное</button>
-  <button class="tab-btn" role="tab" aria-selected="false" data-shift="night">Ночное</button>
-  <button class="tab-btn" role="tab" aria-selected="false" data-shift="weekend">Выходные</button>
-</nav>
+  <section class="app-main">
+    <div class="app-topbar">
+      <div class="brand"><span>F</span> Fido Biznes</div>
+      <div class="topbar-icons" aria-hidden="true">
+        <i></i><i></i><i class="is-blue"></i><i></i><i></i><i class="is-orange"></i><i></i><i></i>
+        <div class="topbar-avatar"></div>
+      </div>
+    </div>
 
-<div class="filters-bar">
-  <div class="filters-left">
-    <div class="btn-group" role="group" aria-label="Масштаб" id="zoomGroup">
-      <button class="btn" aria-pressed="true" data-zoom="sprint2">2 спринта</button>
-      <button class="btn" aria-pressed="false" data-zoom="quarter">Квартал</button>
-      <button class="btn" aria-pressed="false" data-zoom="year">Год</button>
+    <div class="workspace">
+      <div class="screen-card">
+        <div class="screen-header">
+          <h1 class="screen-title">График дежурств L2</h1>
+        </div>
+
+        <nav class="tabs" role="tablist" aria-label="Фильтр по типу смены" id="shiftTabs" hidden>
+          <button class="tab-btn" role="tab" aria-selected="true" data-shift="all">Все</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-shift="day">Дневное</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-shift="night">Ночное</button>
+          <button class="tab-btn" role="tab" aria-selected="false" data-shift="weekend">Выходные</button>
+        </nav>
+
+        <div class="filters-bar">
+          <div class="filters-left">
+            <div class="filter-field">
+              <span class="field-label">Вид отображения</span>
+              <button class="select-like" type="button" aria-disabled="true">Спринты</button>
+            </div>
+
+            <div class="period-nav">
+              <button class="icon-btn compact-nav" id="prevBtn" aria-label="Предыдущий период">←</button>
+              <span class="period-label" id="periodLabel"></span>
+              <button class="icon-btn compact-nav" id="nextBtn" aria-label="Следующий период">→</button>
+            </div>
+
+            <button class="btn btn-quiet" id="todayBtn">Текущий спринт</button>
+            <span class="today-count" id="todayCount">Сегодня дежурят: <strong>0</strong></span>
+          </div>
+
+          <div class="filters-right">
+            <div class="dropdown filter-field" id="deptDropdown">
+              <span class="field-label">Кластер <span class="req">*</span></span>
+              <button class="select-like" id="deptDropdownBtn" aria-haspopup="true" aria-expanded="false">
+                <span id="deptFilterLabel">Все</span>
+                <span class="field-meta" id="deptFilterCount"></span>
+              </button>
+              <div class="dropdown-panel" id="deptDropdownPanel"></div>
+            </div>
+
+            <div class="dropdown filter-field" id="productDropdown">
+              <span class="field-label">Продукт <span class="req">*</span></span>
+              <button class="select-like" id="productDropdownBtn" aria-haspopup="true" aria-expanded="false">
+                <span id="productFilterLabel">Все</span>
+                <span class="field-meta" id="productFilterCount"></span>
+              </button>
+              <div class="dropdown-panel" id="productDropdownPanel"></div>
+            </div>
+
+            <button class="btn btn-ghost" id="expandAllBtn" hidden>Развернуть все</button>
+            <button class="btn btn-brand" id="addDutyBtn" hidden>+ Дежурство</button>
+          </div>
+        </div>
+
+        <main class="tl-wrap" id="tlWrap">
+          <div class="tl-grid" id="tlGrid" role="grid" aria-label="График дежурств по кластерам, продуктам и датам"></div>
+        </main>
+      </div>
     </div>
-    <button class="icon-btn" id="prevBtn" aria-label="Предыдущий период">←</button>
-    <span class="period-label" id="periodLabel"></span>
-    <button class="icon-btn" id="nextBtn" aria-label="Следующий период">→</button>
-    <button class="btn" id="todayBtn">Сегодня</button>
-    <span class="today-count" id="todayCount">Сегодня дежурят: <strong>0</strong></span>
-  </div>
-  <div class="filters-right">
-    <div class="dropdown" id="deptDropdown">
-      <button class="btn" id="deptDropdownBtn" aria-haspopup="true" aria-expanded="false">Департаменты <span id="deptFilterCount"></span></button>
-      <div class="dropdown-panel" id="deptDropdownPanel"></div>
-    </div>
-  </div>
+  </section>
 </div>
-
-<main class="tl-wrap" id="tlWrap">
-  <div class="tl-grid" id="tlGrid" role="grid" aria-label="График дежурств по департаментам и датам"></div>
-</main>
 
 <div class="modal-overlay" id="summaryModalOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="summaryModalTitle">
@@ -222,6 +683,53 @@
       <button type="button" class="modal-close" id="summaryModalClose" aria-label="Закрыть">✕</button>
     </div>
     <div class="modal-body" id="summaryModalBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dutyModalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dutyModalTitle" style="max-width: 560px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="dutyModalTitle">Дежурство</h2>
+      <button type="button" class="modal-close" id="dutyModalClose" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="dutyDept">Кластер <span class="req">*</span></label>
+        <select id="dutyDept"></select>
+      </div>
+      <div class="form-field">
+        <label for="dutyGroup">Продукт <span class="req">*</span></label>
+        <select id="dutyGroup"></select>
+      </div>
+      <div class="form-field">
+        <label for="dutyShift">Тип дежурства <span class="req">*</span></label>
+        <select id="dutyShift">
+          <option value="day">Дневное дежурство</option>
+          <option value="night">Ночное дежурство</option>
+          <option value="weekend">Дежурство в выходной</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="dutyFrom">С даты <span class="req">*</span></label>
+          <input type="date" id="dutyFrom">
+        </div>
+        <div class="form-field">
+          <label for="dutyTo">По дату <span class="req">*</span></label>
+          <input type="date" id="dutyTo">
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="dutySearch">Дежурные</label>
+        <input type="search" id="dutySearch" placeholder="Поиск сотрудника…">
+      </div>
+      <div class="duty-people-list" id="dutyPeopleList"></div>
+    </div>
+    <div class="modal-footer">
+      <span class="form-error" id="dutyFormError" hidden></span>
+      <button type="button" class="btn btn-brand" id="dutySaveBtn">Сохранить</button>
+      <button type="button" class="btn" id="dutyCancelBtn">Выход</button>
+    </div>
   </div>
 </div>
 
@@ -244,21 +752,13 @@
   var state = {
     shift: "all",
     hiddenDepts: new Set(),
-    hiddenGroups: new Set(),                                  // ключи "deptId::groupId"
-    zoom: "sprint2",
-    sprintPairStart: defaultPairStart,   // index into DATA.sprints for sprint2 mode
-    quarterAnchor: quarterStartOf(Roster.fromISO(DATA.today)),
-    yearAnchor: Roster.fromISO(DATA.today).getFullYear()
+    hiddenGroups: new Set(),   // ключи "deptId::groupId"
+    expanded: new Set(),       // ключи продуктов (deptId или deptId::groupId)
+    sprintPairStart: defaultPairStart
   };
 
   function groupKey(deptId, groupId) { return deptId + "::" + groupId; }
 
-  /**
-   * Департаменты, видимые с учётом обоих уровней фильтра: скрытые целиком
-   * департаменты выброшены; у оставшихся departments со groups скрытые
-   * группы вырезаны из .groups (департамент с 0 видимых групп тоже
-   * выбрасывается).
-   */
   function visibleDepartments() {
     return DATA.departments
       .filter(function (d) { return !state.hiddenDepts.has(d.id); })
@@ -270,16 +770,65 @@
       .filter(function (d) { return !d.groups || d.groups.length > 0; });
   }
 
-  function quarterStartOf(d) {
-    var q = Math.floor(d.getMonth() / 3);
-    return new Date(d.getFullYear(), q * 3, 1);
+  function buildRows(visibleDepts) {
+    var rows = [];
+    visibleDepts.forEach(function (d) {
+      if (d.groups && d.groups.length) {
+        rows.push({ type: "cluster", name: d.name });
+        d.groups.forEach(function (g) {
+          rows.push({ type: "product", deptId: d.id, groupId: g.id, name: g.name, key: groupKey(d.id, g.id), nested: true });
+        });
+      } else {
+        rows.push({ type: "product", deptId: d.id, groupId: null, name: d.name, key: d.id, nested: false });
+      }
+    });
+    return rows;
   }
-  function mondayOnOrBefore(d) {
-    var r = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    var wd = r.getDay(); // 0=Sun..6=Sat
-    var diff = (wd === 0) ? 6 : wd - 1;
-    r.setDate(r.getDate() - diff);
-    return r;
+
+  /**
+   * Склейка duties в спаны ТОЛЬКО по смене человека: подряд идущие дни
+   * одного человека одной смены — одна плашка, независимо от границ
+   * спринтов и от того, менялся ли внутри флаг lead (в отличие от
+   * Roster.buildSpans, который режет и по спринтам, и по lead). Новая
+   * плашка появляется только при разрыве в датах — т.е. когда человека
+   * реально сменили. lead итоговой плашки = большинство её дней.
+   */
+  function buildMergedSpans(duties) {
+    var groups = {};
+    duties.forEach(function (d) {
+      var k = d.personId + "|" + d.shift;
+      (groups[k] || (groups[k] = [])).push(d);
+    });
+    var spans = [];
+    Object.keys(groups).forEach(function (k) {
+      var arr = groups[k];
+      var personId = arr[0].personId, shift = arr[0].shift;
+      var p = peopleById[personId];
+      if (!p) return;
+      var byDate = {};
+      arr.forEach(function (d) { if (d.lead) byDate[d.date] = true; else if (!(d.date in byDate)) byDate[d.date] = false; });
+      var dates = Object.keys(byDate).sort();
+      if (!dates.length) return;
+      var start = dates[0], prev = dates[0];
+      var total = 1, leadDays = byDate[dates[0]] ? 1 : 0;
+      function push(endDate) {
+        spans.push({
+          personId: personId, departmentId: p.departmentId, groupId: p.groupId || null,
+          shift: shift, lead: leadDays > total / 2, start: start, end: endDate
+        });
+      }
+      for (var i = 1; i < dates.length; i++) {
+        if (Roster.diffDaysISO(dates[i], prev) > 1) {
+          push(prev);
+          start = dates[i]; total = 0; leadDays = 0;
+        }
+        prev = dates[i];
+        total++;
+        if (byDate[dates[i]]) leadDays++;
+      }
+      push(prev);
+    });
+    return spans;
   }
 
   // ---------------------------------------------------------- controls --
@@ -296,25 +845,52 @@
   var deptDropdown = document.getElementById("deptDropdown");
   var deptDropdownBtn = document.getElementById("deptDropdownBtn");
   var deptDropdownPanel = document.getElementById("deptDropdownPanel");
+  var productDropdown = document.getElementById("productDropdown");
+  var productDropdownBtn = document.getElementById("productDropdownBtn");
+  var productDropdownPanel = document.getElementById("productDropdownPanel");
   DATA.departments.forEach(function (d) {
     var row = document.createElement("label");
     row.className = "dropdown-item";
     row.innerHTML = '<input type="checkbox" checked data-dept="' + d.id + '"> ' + Roster.escapeHtml(d.name);
     deptDropdownPanel.appendChild(row);
-    if (!d.groups) return;
+    if (!d.groups) {
+      var productOnlyRow = document.createElement("label");
+      productOnlyRow.className = "dropdown-item";
+      productOnlyRow.innerHTML = '<input type="checkbox" checked data-product-dept="' + d.id + '"> ' + Roster.escapeHtml(d.name);
+      productDropdownPanel.appendChild(productOnlyRow);
+      return;
+    }
     d.groups.forEach(function (g) {
       var groupRow = document.createElement("label");
       groupRow.className = "dropdown-item is-group";
       groupRow.innerHTML = '<input type="checkbox" checked data-dept="' + d.id + '" data-group="' + g.id + '"> ' + Roster.escapeHtml(g.name);
       deptDropdownPanel.appendChild(groupRow);
+
+      var productRow = document.createElement("label");
+      productRow.className = "dropdown-item";
+      productRow.innerHTML = '<input type="checkbox" checked data-product-dept="' + d.id + '" data-product-group="' + g.id + '"> ' + Roster.escapeHtml(g.name);
+      productDropdownPanel.appendChild(productRow);
     });
   });
   deptDropdownBtn.addEventListener("click", function () {
     var open = deptDropdown.classList.toggle("open");
     deptDropdownBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) {
+      productDropdown.classList.remove("open");
+      productDropdownBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+  productDropdownBtn.addEventListener("click", function () {
+    var open = productDropdown.classList.toggle("open");
+    productDropdownBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) {
+      deptDropdown.classList.remove("open");
+      deptDropdownBtn.setAttribute("aria-expanded", "false");
+    }
   });
   document.addEventListener("click", function (e) {
     if (!deptDropdown.contains(e.target)) { deptDropdown.classList.remove("open"); deptDropdownBtn.setAttribute("aria-expanded", "false"); }
+    if (!productDropdown.contains(e.target)) { productDropdown.classList.remove("open"); productDropdownBtn.setAttribute("aria-expanded", "false"); }
   });
   deptDropdownPanel.addEventListener("change", function (e) {
     var cb = e.target;
@@ -331,48 +907,46 @@
     }
     render();
   });
-
-  var zoomGroup = document.getElementById("zoomGroup");
-  zoomGroup.addEventListener("click", function (e) {
-    var btn = e.target.closest(".btn");
-    if (!btn) return;
-    zoomGroup.querySelectorAll(".btn").forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
-    state.zoom = btn.dataset.zoom;
+  productDropdownPanel.addEventListener("change", function (e) {
+    var cb = e.target;
+    if (!cb.dataset.productDept) return;
+    var deptId = cb.dataset.productDept;
+    var groupId = cb.dataset.productGroup || null;
+    if (groupId) {
+      var gKey = groupKey(deptId, groupId);
+      if (cb.checked) state.hiddenGroups.delete(gKey); else state.hiddenGroups.add(gKey);
+    } else {
+      if (cb.checked) state.hiddenDepts.delete(deptId); else state.hiddenDepts.add(deptId);
+    }
     render();
-  });
-  zoomGroup.addEventListener("keydown", function (e) {
-    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-    var buttons = Array.prototype.slice.call(zoomGroup.querySelectorAll(".btn"));
-    var idx = buttons.indexOf(document.activeElement);
-    if (idx === -1) return;
-    var next = e.key === "ArrowRight" ? Math.min(buttons.length - 1, idx + 1) : Math.max(0, idx - 1);
-    buttons[next].focus();
-    buttons[next].click();
-    e.preventDefault();
   });
 
   document.getElementById("prevBtn").addEventListener("click", function () { shiftPeriod(-1); });
   document.getElementById("nextBtn").addEventListener("click", function () { shiftPeriod(1); });
   document.getElementById("todayBtn").addEventListener("click", function () {
     state.sprintPairStart = defaultPairStart;
-    state.quarterAnchor = quarterStartOf(Roster.fromISO(DATA.today));
-    state.yearAnchor = Roster.fromISO(DATA.today).getFullYear();
+    render();
+    scrollToTodayColumn();
+  });
+
+  var expandAllBtn = document.getElementById("expandAllBtn");
+  expandAllBtn.addEventListener("click", function () {
+    var rows = buildRows(visibleDepartments()).filter(function (r) { return r.type === "product"; });
+    var allExpanded = rows.every(function (r) { return state.expanded.has(r.key); });
+    if (allExpanded) rows.forEach(function (r) { state.expanded.delete(r.key); });
+    else rows.forEach(function (r) { state.expanded.add(r.key); });
     render();
   });
 
   function shiftPeriod(dir) {
-    if (state.zoom === "sprint2") {
-      // Скользящее окно на 1 спринт за раз: 14-15 -> след. -> 15-16 -> 16-17,
-      // а не перескок сразу через пару (14-15 -> 16-17).
-      var next = state.sprintPairStart + dir;
-      state.sprintPairStart = Math.max(0, Math.min(DATA.sprints.length - 2, next));
-    } else if (state.zoom === "quarter") {
-      var d = new Date(state.quarterAnchor.getFullYear(), state.quarterAnchor.getMonth() + dir * 3, 1);
-      state.quarterAnchor = d;
-    } else {
-      state.yearAnchor += dir;
-    }
+    var next = state.sprintPairStart + dir;
+    state.sprintPairStart = Math.max(0, Math.min(DATA.sprints.length - 2, next));
     render();
+  }
+
+  function scrollToTodayColumn() {
+    var el = document.querySelector('.day-head-cell[data-date="' + DATA.today + '"]');
+    if (el) el.scrollIntoView({ inline: "center", block: "nearest" });
   }
 
   window.addEventListener("resize", render);
@@ -387,14 +961,57 @@
 
   // -------------------------------------------------------------- main --
 
+  function setColumnsVar(count) {
+    var dayW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--day-w-fixed")) || 48.25;
+    document.getElementById("tlGrid").style.setProperty("--day-w", dayW + "px");
+    return dayW;
+  }
+
+  function pluralPeopleShort(n) {
+    var mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return "человек";
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "человека";
+    return "человек";
+  }
+
+  function pluralEmployees(n) {
+    var mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return "сотрудник";
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "сотрудника";
+    return "сотрудников";
+  }
+
+  // "ПН" -> "Пн" (формат дня в шапке как в проде: "6 - Пн")
+  function weekdayTitle(iso) {
+    var w = Roster.weekdayLetter(iso);
+    return w.charAt(0) + w.charAt(1).toLowerCase();
+  }
+
+  function mergedSpansForRow(filteredDuties, row, windowStart, windowEnd) {
+    return buildMergedSpans(filteredDuties).filter(function (span) {
+      if (span.end < windowStart || span.start > windowEnd) return false;
+      if (span.departmentId !== row.deptId) return false;
+      if (row.groupId) return span.groupId === row.groupId;
+      return !span.groupId;
+    });
+  }
+
   function render() {
     var visibleDepts = visibleDepartments();
+    var allProductRows = buildRows(DATA.departments).filter(function (r) { return r.type === "product"; });
+    var visibleProductRows = buildRows(visibleDepts).filter(function (r) { return r.type === "product"; });
     var hiddenCount = (DATA.departments.length - visibleDepts.length) + state.hiddenGroups.size;
-    document.getElementById("deptFilterCount").textContent = hiddenCount > 0 ? "(" + hiddenCount + ")" : "";
+    document.getElementById("deptFilterCount").textContent = hiddenCount > 0 ? String(hiddenCount) : "";
+    document.getElementById("deptFilterLabel").textContent =
+      visibleDepts.length === DATA.departments.length ? "Все" :
+      (visibleDepts.length === 1 ? visibleDepts[0].name : visibleDepts.length + " выбрано");
+    document.getElementById("productFilterCount").textContent =
+      visibleProductRows.length === allProductRows.length ? "" : String(visibleProductRows.length);
+    document.getElementById("productFilterLabel").textContent =
+      visibleProductRows.length === allProductRows.length ? "Все" :
+      (visibleProductRows.length === 1 ? visibleProductRows[0].name : visibleProductRows.length + " выбрано");
 
     var filteredDuties = state.shift === "all" ? DATA.duties : DATA.duties.filter(function (d) { return d.shift === state.shift; });
-    // Ещё раз фильтруем по скрытым департаментам/группам — чтобы сводка по
-    // спринту (модалка) тоже не учитывала скрытых людей, не только строки.
     filteredDuties = filteredDuties.filter(function (d) {
       var p = peopleById[d.personId];
       if (!p) return false;
@@ -403,51 +1020,8 @@
       return true;
     });
     updateTodayCount(filteredDuties);
-    // Сохраняем последний контекст фильтров — модалка сводки по спринту
-    // открывается по клику независимо от render() и должна видеть текущие
-    // фильтры (по табу смены / по чекбоксам департаментов).
     lastRenderContext = { visibleDepts: visibleDepts, filteredDuties: filteredDuties, peopleById: peopleById };
 
-
-    if (state.zoom === "sprint2") renderSprint2(visibleDepts, filteredDuties);
-    else if (state.zoom === "quarter") renderQuarter(visibleDepts, filteredDuties);
-    else renderYear(visibleDepts, filteredDuties);
-  }
-
-  /**
-   * Разворачивает департаменты в плоский список СТРОК грида: департамент
-   * без groups — 1 обычная строка; департамент с groups (напр. "Поддержка")
-   * — строка-разделитель на всю ширину (dept-header) + по одной строке на
-   * каждую группу. dept-header НЕ строка данных, лейнов/duty-card в ней нет.
-   */
-  function buildGridRows(visibleDepts) {
-    var cols = Roster.buildColumns(visibleDepts);
-    var gridRows = [];
-    var lastDeptStart = null;
-    cols.forEach(function (col) {
-      if (col.isGrouped && col.deptColStart !== lastDeptStart) {
-        gridRows.push({ type: "dept-header", deptName: col.deptName });
-        lastDeptStart = col.deptColStart;
-      }
-      gridRows.push({ type: "row", col: col });
-    });
-    return gridRows;
-  }
-
-  function columnLabel(col) {
-    return col.isGrouped ? col.deptName + " / " + col.groupName : col.deptName;
-  }
-
-  function setColumnsVar(count) {
-    var containerWidth = document.getElementById("tlWrap").clientWidth;
-    var dayW = Math.max(40, Math.floor((containerWidth - 240) / count));
-    document.getElementById("tlGrid").style.setProperty("--day-w", dayW + "px");
-    return dayW;
-  }
-
-  // ============================================================ sprint2 =
-
-  function renderSprint2(visibleDepts, filteredDuties) {
     var pairStart = Math.max(0, Math.min(DATA.sprints.length - 2, state.sprintPairStart));
     var sprintA = DATA.sprints[pairStart];
     var sprintB = DATA.sprints[pairStart + 1];
@@ -459,24 +1033,81 @@
     [sprintA, sprintB].forEach(function (sprint) {
       for (var iso = sprint.start; iso <= sprint.end; iso = Roster.addDays(iso, 1)) days.push(iso);
     });
+    var windowStart = days[0], windowEnd = days[days.length - 1];
     var dayW = setColumnsVar(days.length);
     var dayIndex = {};
     days.forEach(function (iso, i) { dayIndex[iso] = i; });
 
-    var gridRows = buildGridRows(visibleDepts);
+    // Счётчик дежурных на день для каждой колонки-продукта
+    var countIndex = {};
+    filteredDuties.forEach(function (d) {
+      if (d.date < windowStart || d.date > windowEnd) return;
+      var p = peopleById[d.personId];
+      var key = p.departmentId + "|" + (p.groupId || "") + "|" + d.date;
+      (countIndex[key] || (countIndex[key] = new Set())).add(p.id);
+    });
+    function countFor(deptId, groupId, iso) {
+      var set = countIndex[deptId + "|" + (groupId || "") + "|" + iso];
+      return set ? set.size : 0;
+    }
+
+    var gridRows = buildRows(visibleDepts);
+
+    // Раскладка строк: у кластера и у свёрнутого продукта — 1 строка.
+    // У развёрнутого продукта — 1 строка-заголовок (фон + счётчик людей)
+    // и ровно столько строк ниже, сколько разных людей видно в текущем
+    // окне (Roster.peopleInRange) — без лейн-паковки, 1 человек = 1 строка.
+    var HEADER_ROW_H = 22, LANE_ROW_H = 44, CLUSTER_ROW_H = 22;
+    var rowMeta = [];
+    var rowCursor = 3;
+    gridRows.forEach(function (gr) {
+      if (gr.type === "cluster") {
+        rowMeta.push({ row: gr, gridRowStart: rowCursor, footprint: 1 });
+        rowCursor += 1;
+        return;
+      }
+      var isExpanded = state.expanded.has(gr.key);
+      var windowPeople = Roster.peopleInRange(filteredDuties, peopleById, gr.deptId, windowStart, windowEnd, gr.groupId);
+      var laneSpans = mergedSpansForRow(filteredDuties, gr, windowStart, windowEnd).map(function (span) {
+        return {
+          personId: span.personId,
+          departmentId: span.departmentId,
+          groupId: span.groupId,
+          shift: span.shift,
+          lead: span.lead,
+          start: span.start,
+          end: span.end
+        };
+      });
+      var laneCount = isExpanded && laneSpans.length ? Roster.assignLanes(laneSpans) : 0;
+      var footprint = 1 + (isExpanded ? laneCount : 0);
+      rowMeta.push({
+        row: gr,
+        gridRowStart: rowCursor,
+        footprint: footprint,
+        isExpanded: isExpanded,
+        windowPeople: windowPeople,
+        laneSpans: laneSpans,
+        laneCount: laneCount
+      });
+      rowCursor += footprint;
+    });
 
     var grid = document.getElementById("tlGrid");
     grid.innerHTML = "";
-    grid.style.gridTemplateColumns = "240px repeat(" + days.length + ", var(--day-w))";
-    grid.style.gridTemplateRows = "34px 40px repeat(" + gridRows.length + ", auto)";
+    grid.style.gridTemplateColumns = "var(--label-col-w) repeat(" + days.length + ", var(--day-w))";
+    grid.style.gridTemplateRows = "20px 20px " + rowMeta.map(function (m) {
+      if (m.row.type === "cluster") return CLUSTER_ROW_H + "px";
+      var sizes = [HEADER_ROW_H + "px"];
+      for (var k = 0; k < m.footprint - 1; k++) sizes.push(LANE_ROW_H + "px");
+      return sizes.join(" ");
+    }).join(" ");
 
-    // corner
     var corner = document.createElement("div");
     corner.className = "corner-cell";
-    corner.textContent = "Департамент";
+    corner.textContent = "Кластер / продукт";
     grid.appendChild(corner);
 
-    // sprint header row
     [sprintA, sprintB].forEach(function (sprint, si) {
       var cell = document.createElement("div");
       cell.className = "sprint-head-cell sprint-clickable";
@@ -492,7 +1123,6 @@
       grid.appendChild(cell);
     });
 
-    // day header row
     days.forEach(function (iso, idx) {
       var isToday = iso === DATA.today;
       var isWeekend = Roster.isWeekendISO(iso);
@@ -500,355 +1130,298 @@
       cell.className = "day-head-cell" + (isWeekend ? " is-weekend" : "") + (isToday ? " is-today" : "");
       cell.style.gridColumn = (idx + 2) + "";
       cell.style.gridRow = "2";
-      cell.style.top = "34px";
+      cell.style.top = "20px";
       cell.dataset.date = iso;
-      cell.innerHTML = '<span class="dnum">' + Roster.dayNum(iso) + '</span><span>' + Roster.weekdayLetter(iso) + '</span>';
+      cell.innerHTML = '<span class="d-num">' + Roster.dayNum(iso) + '</span>&nbsp;-&nbsp;' + weekdayTitle(iso);
       grid.appendChild(cell);
     });
 
-    // spans
-    var spans = Roster.buildSpans(filteredDuties, peopleById, DATA.sprints);
-    var visibleSprintIds = {};
-    visibleSprintIds[sprintA.id] = true;
-    visibleSprintIds[sprintB.id] = true;
-    var relevant = spans.filter(function (s) { return visibleSprintIds[s.sprintId]; });
+    // Спаны склеены только по смене человека (см. buildMergedSpans),
+    // потом обрезаются по видимому окну — карточка визуально непрерывна,
+    // пока дежурит один и тот же человек.
+    var mergedSpans = buildMergedSpans(filteredDuties).filter(function (s) {
+      return s.end >= windowStart && s.start <= windowEnd;
+    });
 
-    var LANE_H = 44, LANE_GAP = 4, ROW_PAD = 8;
-
-    gridRows.forEach(function (gr, i) {
-      var gridRow = i + 3;
-
-      if (gr.type === "dept-header") {
-        var hdr = document.createElement("div");
-        hdr.className = "dept-section-row";
-        hdr.style.gridColumn = "1 / -1";
-        hdr.style.gridRow = gridRow + "";
-        hdr.innerHTML = '<span class="dept-section-label"></span>';
-        hdr.firstChild.textContent = gr.deptName;
-        grid.appendChild(hdr);
-        return;
-      }
-
-      var col = gr.col;
-      var colSpans = relevant.filter(function (s) { return s.departmentId === col.deptId && (col.groupId === null || s.groupId === col.groupId); }).slice();
-      var laneCount = Roster.assignLanes(colSpans) || 1;
-      var rowHeight = laneCount * LANE_H + (laneCount - 1) * LANE_GAP + ROW_PAD * 2;
-
-      var label = document.createElement("div");
-      label.className = "dept-label-cell" + (col.isGrouped ? " is-group" : "");
-      label.style.gridColumn = "1";
-      label.style.gridRow = gridRow + "";
-      label.textContent = col.isGrouped ? col.groupName : col.deptName;
-      grid.appendChild(label);
-
-      var body = document.createElement("div");
-      body.className = "dept-body-cell";
-      body.style.gridColumn = "2 / span " + days.length;
-      body.style.gridRow = gridRow + "";
-      body.style.height = rowHeight + "px";
-      body.setAttribute("role", "gridcell");
-
+    function appendColBg(container) {
       days.forEach(function (iso, idx) {
         var bg = document.createElement("div");
         bg.className = "col-bg" + (Roster.isWeekendISO(iso) ? " weekend" : "");
         bg.style.left = (idx * dayW) + "px";
         bg.style.width = dayW + "px";
-        body.appendChild(bg);
+        container.appendChild(bg);
       });
+    }
 
-      var covered = new Array(days.length).fill(false);
-      colSpans.forEach(function (span) {
-        var s = dayIndex[span.start], e = dayIndex[span.end];
-        for (var i2 = s; i2 <= e; i2++) covered[i2] = true;
-        var card = Roster.renderCard(span, peopleById, departmentsById, { compact: (e - s + 1) < 2 });
-        card.style.left = (s * dayW + 3) + "px";
-        card.style.width = ((e - s + 1) * dayW - 6) + "px";
-        card.style.top = (ROW_PAD + span.lane * (LANE_H + LANE_GAP)) + "px";
-        body.appendChild(card);
-      });
-      covered.forEach(function (isCovered, idx) {
-        if (isCovered) return;
-        var dash = document.createElement("div");
-        dash.className = "empty-dash-abs";
-        dash.style.left = (idx * dayW) + "px";
-        dash.style.width = dayW + "px";
-        dash.innerHTML = '<span class="empty-dash">—</span>';
-        body.appendChild(dash);
-      });
+    function buildBar(span) {
+      var person = peopleById[span.personId];
+      var clipStart = span.start < windowStart ? windowStart : span.start;
+      var clipEnd = span.end > windowEnd ? windowEnd : span.end;
+      var s = dayIndex[clipStart], e = dayIndex[clipEnd];
 
-      grid.appendChild(body);
+      var el = Roster.renderCard(span, peopleById, departmentsById, { compact: (e - s + 1) < 2 });
+      el.style.left = (s * dayW + 2) + "px";
+      el.style.width = ((e - s + 1) * dayW - 4) + "px";
+      return { el: el, s: s, e: e };
+    }
+
+    rowMeta.forEach(function (m) {
+      var gr = m.row;
+
+      if (gr.type === "cluster") {
+        var section = document.createElement("div");
+        section.className = "cluster-row";
+        section.style.gridColumn = "1 / -1";
+        section.style.gridRow = m.gridRowStart + "";
+        section.innerHTML = '<span class="cluster-label"></span>';
+        section.firstChild.textContent = gr.name;
+        grid.appendChild(section);
+        return;
+      }
+
+      var isExpanded = m.isExpanded;
+      var windowPeople = m.windowPeople;
+
+      var label = document.createElement("div");
+      label.className = "product-label" + (gr.nested ? " is-nested" : "");
+      label.style.gridColumn = "1";
+      label.style.gridRow = m.gridRowStart + "";
+      label.tabIndex = 0;
+      label.setAttribute("role", "button");
+      label.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+      label.setAttribute("aria-label", (isExpanded ? "Свернуть " : "Развернуть ") + gr.name);
+      label.innerHTML =
+        '<svg class="p-chev" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '<span class="p-team" aria-hidden="true"></span>' +
+        '<span class="p-name"></span>' +
+        '<span class="p-count">' + windowPeople.length + ' ' + pluralEmployees(windowPeople.length) + '</span>';
+      label.querySelector(".p-name").textContent = gr.name;
+      label.addEventListener("click", function () { toggleProduct(gr.key); });
+      label.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleProduct(gr.key); }
+      });
+      grid.appendChild(label);
+
+      var headerBody = document.createElement("div");
+      headerBody.className = "row-header-body";
+      headerBody.style.gridColumn = "2 / span " + days.length;
+      headerBody.style.gridRow = m.gridRowStart + "";
+      headerBody.setAttribute("role", "gridcell");
+      appendColBg(headerBody);
+
+      days.forEach(function (iso, idx) {
+        var count = countFor(gr.deptId, gr.groupId, iso);
+        var cell = document.createElement("div");
+        cell.className = "count-cell " + (count === 0 ? "c-zero" : count >= 5 ? "c-many" : "c-some");
+        cell.style.left = (idx * dayW + 1) + "px";
+        cell.style.width = (dayW - 2) + "px";
+        cell.textContent = count === 0 ? "0" : count + " с";
+        cell.dataset.tooltip = gr.name + ", " + Roster.formatRangeFull(iso, iso) + ": " +
+          (count === 0 ? "никто не назначен" : count + " " + pluralPeopleShort(count) + " на дежурстве");
+        headerBody.appendChild(cell);
+      });
+      headerBody.style.cursor = "pointer";
+      headerBody.addEventListener("click", function () { toggleProduct(gr.key); });
+      grid.appendChild(headerBody);
+
+      if (!isExpanded) return;
+
+      for (var lane = 0; lane < m.laneCount; lane++) {
+        var laneGridRow = m.gridRowStart + 1 + lane;
+
+        var laneSpacer = document.createElement("div");
+        laneSpacer.className = "lane-spacer";
+        laneSpacer.style.gridColumn = "1";
+        laneSpacer.style.gridRow = laneGridRow + "";
+        grid.appendChild(laneSpacer);
+
+        var laneBody = document.createElement("div");
+        laneBody.className = "event-lane";
+        laneBody.style.gridColumn = "2 / span " + days.length;
+        laneBody.style.gridRow = laneGridRow + "";
+        laneBody.setAttribute("role", "gridcell");
+        appendColBg(laneBody);
+
+        m.laneSpans.filter(function (span) { return span.lane === lane; }).forEach(function (span) {
+          var bar = buildBar(span);
+          laneBody.appendChild(bar.el);
+        });
+
+        grid.appendChild(laneBody);
+      }
     });
 
-    // today vertical line
+    // Колонка "сегодня" — оранжевая рамка на всю высоту, как в проде
+    deptDropdownPanel.querySelectorAll("input[data-dept]").forEach(function (cb) {
+      var deptId = cb.dataset.dept;
+      if (cb.dataset.group) {
+        cb.checked = !state.hiddenGroups.has(groupKey(deptId, cb.dataset.group));
+        cb.disabled = state.hiddenDepts.has(deptId);
+        cb.closest(".dropdown-item").classList.toggle("is-disabled", state.hiddenDepts.has(deptId));
+      } else {
+        cb.checked = !state.hiddenDepts.has(deptId);
+      }
+    });
+    productDropdownPanel.querySelectorAll("input[data-product-dept]").forEach(function (cb) {
+      var deptId = cb.dataset.productDept;
+      if (state.hiddenDepts.has(deptId)) cb.checked = false;
+      else if (cb.dataset.productGroup) cb.checked = !state.hiddenGroups.has(groupKey(deptId, cb.dataset.productGroup));
+      else cb.checked = !state.hiddenDepts.has(deptId);
+    });
+
     if (dayIndex[DATA.today] !== undefined) {
-      var line = document.createElement("div");
-      line.className = "today-line";
-      line.style.left = (240 + dayIndex[DATA.today] * dayW) + "px";
-      line.style.height = grid.scrollHeight + "px";
-      grid.appendChild(line);
+      var col = document.createElement("div");
+      col.className = "today-col";
+      col.style.left = (350 + dayIndex[DATA.today] * dayW) + "px";
+      col.style.width = dayW + "px";
+      col.style.height = grid.scrollHeight + "px";
+      grid.appendChild(col);
     }
 
-    Roster.wireHighlight(grid);
-
-    if (!renderSprint2._scrolled) {
-      renderSprint2._scrolled = true;
-      requestAnimationFrame(function () {
-        var el = document.querySelector('.day-head-cell[data-date="' + DATA.today + '"]');
-        if (el) el.scrollIntoView({ inline: "center", block: "nearest" });
-      });
-    }
-  }
-
-  // ============================================================= quarter =
-
-  function isoWeeksOfQuarter(anchor) {
-    var start = mondayOnOrBefore(anchor);
-    var weeks = [];
-    for (var i = 0; i < 13; i++) {
-      var wStart = Roster.addDaysDate(start, i * 7);
-      var wEnd = Roster.addDaysDate(wStart, 6);
-      weeks.push({ start: Roster.toISO(wStart), end: Roster.toISO(wEnd) });
-    }
-    return weeks;
-  }
-
-  function renderQuarter(visibleDepts, filteredDuties) {
-    var anchor = state.quarterAnchor;
-    var q = Math.floor(anchor.getMonth() / 3) + 1;
-    document.getElementById("periodLabel").textContent = anchor.getFullYear() + " · Q" + q;
-    document.getElementById("prevBtn").disabled = false;
-    document.getElementById("nextBtn").disabled = false;
-
-    var weeks = isoWeeksOfQuarter(anchor);
-    var dayW = setColumnsVar(weeks.length);
-    var gridRows = buildGridRows(visibleDepts);
-
-    var grid = document.getElementById("tlGrid");
-    grid.innerHTML = "";
-    grid.style.gridTemplateColumns = "240px repeat(" + weeks.length + ", var(--day-w))";
-    grid.style.gridTemplateRows = "34px 40px repeat(" + gridRows.length + ", auto)";
-
-    var corner = document.createElement("div");
-    corner.className = "corner-cell";
-    corner.textContent = "Департамент";
-    grid.appendChild(corner);
-
-    // Спринты — ровно 2 недели, и обе всегда попадают в один и тот же
-    // спринт (14 дней = 2 понедельника), поэтому недели можно без остатка
-    // сгруппировать по спринтам и показать их colspan-ячейками в верхней
-    // строке — как в режиме "2 спринта" — вместо одной плоской надписи
-    // "квартал" на весь ряд.
-    var sprintGroups = [];
-    weeks.forEach(function (w, idx) {
-      var sprint = DATA.sprints.find(function (s) { return w.start >= s.start && w.start <= s.end; });
-      var last = sprintGroups[sprintGroups.length - 1];
-      if (last && last.sprint && sprint && last.sprint.id === sprint.id) {
-        last.span++;
-      } else {
-        sprintGroups.push({ sprint: sprint, startIdx: idx, span: 1 });
-      }
-    });
-    sprintGroups.forEach(function (g) {
-      var cell = document.createElement("div");
-      cell.className = "sprint-head-cell";
-      cell.style.gridColumn = (g.startIdx + 2) + " / span " + g.span;
-      cell.style.gridRow = "1";
-      // Узкая колонка недели (не 14 колонок дня, как в "2 спринта") — диапазон
-      // дат сюда не помещается и переносится на 2 строки, наезжая на ряд
-      // недель снизу. Показываем только ID + бейдж, диапазон и так виден
-      // в подписях недель ниже.
-      if (g.sprint) {
-        cell.className += " sprint-clickable";
-        cell.dataset.tooltip = Roster.formatRangeFull(g.sprint.start, g.sprint.end);
-        cell.dataset.sprintId = g.sprint.id;
-        cell.tabIndex = 0;
-        cell.setAttribute("role", "button");
-        cell.setAttribute("aria-label", "Сводка по спринту " + g.sprint.id);
-        cell.innerHTML = "<span>" + g.sprint.id + "</span>" +
-          (g.sprint.current ? '<span class="badge badge-success">Текущий</span>' : "");
-      } else {
-        cell.textContent = "—";
-      }
-      grid.appendChild(cell);
-    });
-
-    var todayISO = DATA.today;
-    weeks.forEach(function (w, idx) {
-      var isCurrentWeek = todayISO >= w.start && todayISO <= w.end;
-      var cell = document.createElement("div");
-      cell.className = "day-head-cell" + (isCurrentWeek ? " is-current-period" : "");
-      cell.style.gridColumn = (idx + 2) + "";
-      cell.style.gridRow = "2";
-      cell.style.top = "34px";
-      cell.innerHTML = '<span class="dnum">' + Roster.dayNum(w.start) + " " + Roster.monthShort(w.start) + '</span><span>нед.</span>';
-      grid.appendChild(cell);
-    });
-
-    gridRows.forEach(function (gr, i) {
-      var gridRow = i + 3;
-
-      if (gr.type === "dept-header") {
-        var hdr = document.createElement("div");
-        hdr.className = "dept-section-row";
-        hdr.style.gridColumn = "1 / -1";
-        hdr.style.gridRow = gridRow + "";
-        hdr.innerHTML = '<span class="dept-section-label"></span>';
-        hdr.firstChild.textContent = gr.deptName;
-        grid.appendChild(hdr);
-        return;
-      }
-
-      var col = gr.col;
-      var label = document.createElement("div");
-      label.className = "dept-label-cell" + (col.isGrouped ? " is-group" : "");
-      label.style.gridColumn = "1";
-      label.style.gridRow = gridRow + "";
-      label.textContent = col.isGrouped ? col.groupName : col.deptName;
-      grid.appendChild(label);
-
-      weeks.forEach(function (w, idx) {
-        var cell = document.createElement("div");
-        cell.className = "agg-cell";
-        cell.style.gridColumn = (idx + 2) + "";
-        cell.style.gridRow = gridRow + "";
-        cell.style.height = "56px";
-
-        var peopleInWeek = Roster.peopleInRange(filteredDuties, peopleById, col.deptId, w.start, w.end, col.groupId);
-        if (peopleInWeek.length === 0) {
-          cell.innerHTML = '<span class="empty-dash">—</span>';
-        } else {
-          var shown = peopleInWeek.slice(0, 3);
-          var html = shown.map(function (p) {
-            var partial = p.weekDays < 7 ? p.weekDays : null;
-            var extra = ' tabindex="0" aria-label="' + Roster.escapeHtml(p.fullName) + ', ' + Roster.escapeHtml(columnLabel(col)) + ', неделя с ' + Roster.formatRangeFull(w.start, w.start) +
-              (partial ? " (" + partial + " из 7 дней — часть недели)" : "") + '" data-person-id="' + p.id + '"';
-            return Roster.avatarHtml(p, "avatar-sm", extra, p.isLead, partial);
-          }).join("");
-          if (peopleInWeek.length > 3) html += '<span class="agg-more">+' + (peopleInWeek.length - 3) + '</span>';
-          cell.innerHTML = html;
-        }
-        grid.appendChild(cell);
-      });
-    });
+    var productRows = gridRows.filter(function (r) { return r.type === "product"; });
+    var allExpanded = productRows.length > 0 && productRows.every(function (r) { return state.expanded.has(r.key); });
+    expandAllBtn.textContent = allExpanded ? "Свернуть все" : "Развернуть все";
 
     Roster.wireHighlight(grid);
   }
 
-  // ================================================================ year =
-
-  function renderYear(visibleDepts, filteredDuties) {
-    var year = state.yearAnchor;
-    document.getElementById("periodLabel").textContent = "" + year;
-    document.getElementById("prevBtn").disabled = false;
-    document.getElementById("nextBtn").disabled = false;
-
-    var months = [];
-    for (var m = 0; m < 12; m++) months.push(m);
-    var dayW = setColumnsVar(12);
-    var gridRows = buildGridRows(visibleDepts);
-
-    var grid = document.getElementById("tlGrid");
-    grid.innerHTML = "";
-    grid.style.gridTemplateColumns = "240px repeat(12, var(--day-w))";
-    grid.style.gridTemplateRows = "34px 40px repeat(" + gridRows.length + ", auto)";
-
-    var corner = document.createElement("div");
-    corner.className = "corner-cell";
-    corner.textContent = "Департамент";
-    grid.appendChild(corner);
-
-    var yCell = document.createElement("div");
-    yCell.className = "sprint-head-cell";
-    yCell.style.gridColumn = "2 / span 12";
-    yCell.style.gridRow = "1";
-    yCell.textContent = year + " год";
-    grid.appendChild(yCell);
-
-    var todayDate = Roster.fromISO(DATA.today);
-    months.forEach(function (m, idx) {
-      var isCurrentMonth = todayDate.getFullYear() === year && todayDate.getMonth() === m;
-      var cell = document.createElement("div");
-      cell.className = "day-head-cell" + (isCurrentMonth ? " is-current-period" : "");
-      cell.style.gridColumn = (idx + 2) + "";
-      cell.style.gridRow = "2";
-      cell.style.top = "34px";
-      cell.innerHTML = '<span class="dnum">' + Roster.MONTHS_SHORT_UP(m) + '</span>';
-      grid.appendChild(cell);
-    });
-
-    gridRows.forEach(function (gr, i) {
-      var gridRow = i + 3;
-
-      if (gr.type === "dept-header") {
-        var hdr = document.createElement("div");
-        hdr.className = "dept-section-row";
-        hdr.style.gridColumn = "1 / -1";
-        hdr.style.gridRow = gridRow + "";
-        hdr.innerHTML = '<span class="dept-section-label"></span>';
-        hdr.firstChild.textContent = gr.deptName;
-        grid.appendChild(hdr);
-        return;
-      }
-
-      var col = gr.col;
-      var label = document.createElement("div");
-      label.className = "dept-label-cell" + (col.isGrouped ? " is-group" : "");
-      label.style.gridColumn = "1";
-      label.style.gridRow = gridRow + "";
-      label.textContent = col.isGrouped ? col.groupName : col.deptName;
-      grid.appendChild(label);
-
-      months.forEach(function (m, idx) {
-        var mm = String(m + 1).padStart(2, "0");
-        var monthStart = year + "-" + mm + "-01";
-        var monthEnd = year + "-" + mm + "-" + String(new Date(year, m + 1, 0).getDate()).padStart(2, "0");
-
-        var cell = document.createElement("div");
-        cell.className = "agg-cell clickable";
-        cell.style.gridColumn = (idx + 2) + "";
-        cell.style.gridRow = gridRow + "";
-        cell.style.height = "48px";
-        cell.tabIndex = 0;
-        cell.setAttribute("role", "button");
-
-        var people = Roster.peopleInRange(filteredDuties, peopleById, col.deptId, monthStart, monthEnd, col.groupId);
-        if (people.length === 0) {
-          cell.innerHTML = '<span class="empty-dash">—</span>';
-          cell.setAttribute("aria-label", columnLabel(col) + ", " + Roster.MONTHS_SHORT_UP(m) + " " + year + ", дежурств нет. Перейти к периоду.");
-        } else {
-          // колонка месяца уже недельной — показываем меньше аватаров,
-          // чтобы не вылезать за пределы узкой ячейки
-          var shown = people.slice(0, 2);
-          var html = shown.map(function (p) {
-            return Roster.avatarHtml(p, "avatar-sm", ' data-person-id="' + p.id + '"', p.isLead);
-          }).join("");
-          if (people.length > 2) html += '<span class="agg-more">+' + (people.length - 2) + '</span>';
-          cell.innerHTML = html;
-          var names = people.map(function (p) { return p.fullName + " (" + p.weekDays + " дн.)"; }).join(", ");
-          cell.dataset.tooltip = names;
-          cell.setAttribute("aria-label", columnLabel(col) + ", " + Roster.MONTHS_SHORT_UP(m) + " " + year + ": " + names + ". Перейти к периоду.");
-        }
-        cell.addEventListener("click", function () { jumpToMonth(year, m); });
-        cell.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jumpToMonth(year, m); } });
-        grid.appendChild(cell);
-      });
-    });
-  }
-
-  function jumpToMonth(year, month) {
-    var mid = new Date(year, month, 15);
-    var midISO = Roster.toISO(mid);
-    var idx = DATA.sprints.findIndex(function (s) { return midISO >= s.start && midISO <= s.end; });
-    if (idx === -1) idx = 0;
-    state.sprintPairStart = Math.max(0, Math.min(DATA.sprints.length - 2, idx > 0 ? idx - 1 : idx));
-    state.zoom = "sprint2";
-    zoomGroup.querySelectorAll(".btn").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.zoom === "sprint2" ? "true" : "false"); });
+  function toggleProduct(key) {
+    if (state.expanded.has(key)) state.expanded.delete(key);
+    else state.expanded.add(key);
     render();
   }
 
-  Roster.MONTHS_SHORT_UP = function (m) {
-    return ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"][m];
-  };
+  // ------------------------------------------------- форма "Дежурство" --
+
+  var dutyOverlay = document.getElementById("dutyModalOverlay");
+  var dutyDept = document.getElementById("dutyDept");
+  var dutyGroup = document.getElementById("dutyGroup");
+  var dutyShift = document.getElementById("dutyShift");
+  var dutyFrom = document.getElementById("dutyFrom");
+  var dutyTo = document.getElementById("dutyTo");
+  var dutySearch = document.getElementById("dutySearch");
+  var dutyPeopleList = document.getElementById("dutyPeopleList");
+  var dutyFormError = document.getElementById("dutyFormError");
+  var dutyLastFocused = null;
+
+  DATA.departments.forEach(function (d) {
+    var opt = document.createElement("option");
+    opt.value = d.id;
+    opt.textContent = d.name;
+    dutyDept.appendChild(opt);
+  });
+
+  function refreshGroupSelect() {
+    var dept = departmentsById[dutyDept.value];
+    dutyGroup.innerHTML = "";
+    if (dept && dept.groups && dept.groups.length) {
+      dutyGroup.disabled = false;
+      dept.groups.forEach(function (g) {
+        var opt = document.createElement("option");
+        opt.value = g.id;
+        opt.textContent = g.name;
+        dutyGroup.appendChild(opt);
+      });
+    } else {
+      dutyGroup.disabled = true;
+      var opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "— (в кластере нет продуктов)";
+      dutyGroup.appendChild(opt);
+    }
+    refreshPeopleList();
+  }
+
+  function candidatePeople() {
+    var deptId = dutyDept.value;
+    var groupId = dutyGroup.disabled ? null : dutyGroup.value;
+    return DATA.people.filter(function (p) {
+      if (p.departmentId !== deptId) return false;
+      if (groupId && p.groupId !== groupId) return false;
+      return true;
+    });
+  }
+
+  function refreshPeopleList() {
+    var query = dutySearch.value.trim().toLowerCase();
+    var list = candidatePeople();
+    dutySearch.placeholder = "Поиск сотрудника (" + list.length + ")…";
+    var checkedIds = new Set(
+      Array.from(dutyPeopleList.querySelectorAll("input:checked")).map(function (cb) { return cb.value; })
+    );
+    dutyPeopleList.innerHTML = "";
+    var shown = list.filter(function (p) { return !query || p.fullName.toLowerCase().indexOf(query) !== -1; });
+    if (!shown.length) {
+      dutyPeopleList.innerHTML = '<div class="duty-people-empty">Никого не найдено</div>';
+      return;
+    }
+    shown.forEach(function (p) {
+      var row = document.createElement("label");
+      row.className = "duty-person-row";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = p.id;
+      cb.checked = checkedIds.has(p.id);
+      row.appendChild(cb);
+      row.appendChild(document.createTextNode(p.fullName));
+      dutyPeopleList.appendChild(row);
+    });
+  }
+
+  dutyDept.addEventListener("change", refreshGroupSelect);
+  dutyGroup.addEventListener("change", refreshPeopleList);
+  dutySearch.addEventListener("input", refreshPeopleList);
+
+  function openDutyModal() {
+    dutyLastFocused = document.activeElement;
+    dutyFrom.value = DATA.today;
+    dutyTo.value = DATA.today;
+    dutySearch.value = "";
+    dutyFormError.hidden = true;
+    refreshGroupSelect();
+    dutyOverlay.hidden = false;
+    dutyDept.focus();
+  }
+  function closeDutyModal() {
+    dutyOverlay.hidden = true;
+    if (dutyLastFocused && dutyLastFocused.focus) dutyLastFocused.focus();
+  }
+
+  document.getElementById("addDutyBtn").addEventListener("click", openDutyModal);
+  document.getElementById("dutyModalClose").addEventListener("click", closeDutyModal);
+  document.getElementById("dutyCancelBtn").addEventListener("click", closeDutyModal);
+  dutyOverlay.addEventListener("click", function (e) { if (e.target === dutyOverlay) closeDutyModal(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !dutyOverlay.hidden) closeDutyModal();
+  });
+
+  document.getElementById("dutySaveBtn").addEventListener("click", function () {
+    var from = dutyFrom.value, to = dutyTo.value;
+    var selected = Array.from(dutyPeopleList.querySelectorAll("input:checked")).map(function (cb) { return cb.value; });
+    var err = "";
+    if (!from || !to) err = "Укажите обе даты";
+    else if (from > to) err = "«С даты» позже «По дату»";
+    else if (!selected.length) err = "Выберите хотя бы одного дежурного";
+    if (err) {
+      dutyFormError.textContent = err;
+      dutyFormError.hidden = false;
+      return;
+    }
+    // Существующие дни этого человека/смены не дублируем
+    var existing = new Set(DATA.duties.map(function (d) { return d.personId + "|" + d.date + "|" + d.shift; }));
+    selected.forEach(function (personId) {
+      for (var iso = from; iso <= to; iso = Roster.addDays(iso, 1)) {
+        var key = personId + "|" + iso + "|" + dutyShift.value;
+        if (existing.has(key)) continue;
+        DATA.duties.push({ personId: personId, date: iso, shift: dutyShift.value, lead: false });
+        existing.add(key);
+      }
+    });
+    closeDutyModal();
+    render();
+  });
+
+  // ---------------------------------------------------------------- init --
 
   render();
 
@@ -857,6 +1430,8 @@
     sprints: DATA.sprints,
     getContext: function () { return lastRenderContext; }
   });
+
+  requestAnimationFrame(scrollToTodayColumn);
 })();
 </script>
 </body>

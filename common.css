@@ -583,10 +583,21 @@ a { color: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 6px 4px;
+  gap: 4px;
+  padding: 6px 8px;
   cursor: default;
   overflow: hidden;
+}
+.agg-cell .avatar-stack {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+.agg-cell .avatar-stack .avatar {
+  margin-left: -4px;
+}
+.agg-cell .avatar-stack .avatar:first-child {
+  margin-left: 0;
 }
 .agg-cell.clickable { cursor: pointer; }
 .agg-cell.clickable:hover { background: var(--brand-25); }
@@ -596,7 +607,9 @@ a { color: inherit; }
   color: var(--gray-500);
   background: var(--gray-100);
   border-radius: 9999px;
-  padding: 1px 6px;
+  padding: 2px 7px;
+  line-height: 1;
+  flex: none;
 }
 .heat-cell {
   display: flex;

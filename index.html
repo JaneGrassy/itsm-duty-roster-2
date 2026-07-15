@@ -147,6 +147,10 @@
 
   .screen-header {
     padding: 10px 12px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
   .screen-title {
     margin: 0;
@@ -407,9 +411,9 @@
   .form-field { margin-bottom: 12px; }
   .form-field > label {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    color: var(--gray-900);
+    color: #525866;
     margin-bottom: 4px;
   }
   .form-field > label .req { color: var(--error-500); }
@@ -418,28 +422,29 @@
   .form-field input[type="search"] {
     width: 100%;
     box-sizing: border-box;
-    border: 1px solid var(--gray-300);
+    border: 1px solid #d6dae1;
     border-radius: 8px;
-    padding: 8px 10px;
+    padding: 9px 12px;
     font-size: 14px;
     font-family: inherit;
-    color: var(--gray-900);
+    color: #4f5560;
     background: #fff;
+    min-height: 42px;
   }
-  .form-row { display: flex; gap: 12px; }
+  .form-row { display: flex; gap: 20px; }
   .form-row .form-field { flex: 1; }
   .duty-people-list {
-    border: 1px solid var(--gray-200);
+    border: 1px solid #d6dae1;
     border-radius: 8px;
-    max-height: 220px;
+    max-height: 420px;
     overflow-y: auto;
-    padding: 4px;
+    padding: 8px 0;
   }
   .duty-person-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 7px 10px;
+    padding: 7px 16px;
     border-radius: 6px;
     font-size: 14px;
     color: var(--gray-900);
@@ -452,8 +457,8 @@
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    padding: 12px 20px 16px;
-    border-top: 1px solid var(--gray-200);
+    padding: 16px 24px 22px;
+    border-top: 1px solid #eceff4;
     flex: none;
   }
   .form-error { color: var(--error-500); font-size: 13px; margin-right: auto; align-self: center; }
@@ -475,6 +480,7 @@
     gap: 10px;
     flex-wrap: wrap;
   }
+  .filters-right { margin-left: auto; }
   .filter-field {
     display: flex;
     flex-direction: column;
@@ -520,6 +526,26 @@
   .select-like[aria-disabled="true"] {
     cursor: default;
   }
+  .native-select {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 200px;
+    min-width: 200px;
+    line-height: 25px;
+    text-align: left;
+    font-family: inherit;
+    padding: 0 28px 0 8px;
+    background:
+      linear-gradient(180deg, #fff, #fafafa),
+      linear-gradient(45deg, transparent 50%, #7d838d 50%),
+      linear-gradient(135deg, #7d838d 50%, transparent 50%);
+    background-repeat: no-repeat;
+    background-position: 0 0, calc(100% - 14px) 11px, calc(100% - 9px) 11px;
+    background-size: 100% 100%, 5px 5px, 5px 5px;
+    cursor: pointer;
+  }
+  .native-select::after { content: none; }
   .period-nav {
     display: flex;
     align-items: center;
@@ -562,6 +588,149 @@
     background: #f5f6f7;
     border-color: #d7dbe2;
     color: #6c737f;
+  }
+  .btn.btn-add-duty {
+    height: 18px;
+    padding: 0 10px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    background: #8b88f8;
+    border-color: #8b88f8;
+    border-radius: 3px;
+    box-shadow: none;
+    flex: none;
+  }
+  .btn.btn-add-duty:hover { background: #7d79f2; }
+  .duty-modal {
+    max-width: 950px !important;
+    border-radius: 12px;
+    box-shadow: 0 14px 40px rgba(16, 24, 40, 0.24);
+  }
+  .duty-modal .modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e7e9ee;
+  }
+  .duty-modal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #2d3139;
+  }
+  .duty-modal .modal-title::before {
+    content: "\2630";
+    font-size: 18px;
+    color: #2d3139;
+  }
+  .duty-modal .modal-close {
+    width: 44px;
+    height: 44px;
+    border: 3px solid #2c2f36;
+    border-radius: 50%;
+    color: #2c2f36;
+    font-size: 24px;
+    line-height: 1;
+  }
+  .duty-modal .modal-close:hover { background: #f6f7f9; }
+  .duty-modal .modal-body {
+    padding: 22px 24px 16px;
+  }
+  .duty-modal .btn {
+    min-width: 164px;
+    justify-content: center;
+    border-radius: 8px;
+    box-shadow: none;
+    font-size: 14px;
+  }
+  .duty-modal .btn.btn-brand {
+    background: #eff8ff;
+    color: #3b82c4;
+    border-color: #cfe7fb;
+  }
+  .duty-modal .btn.btn-brand:hover { background: #e4f2fd; }
+  .duty-modal .form-field {
+    margin-bottom: 10px;
+  }
+  .duty-modal .form-field > label {
+    font-size: 10px;
+    line-height: 14px;
+    font-weight: 700;
+    color: #6f7681;
+    margin-bottom: 2px;
+  }
+  .duty-modal .form-field > label .req {
+    color: #d92d20;
+  }
+  .duty-modal .form-field select,
+  .duty-modal .form-field input[type="date"],
+  .duty-modal .form-field input[type="search"] {
+    min-height: 27px;
+    height: 27px;
+    padding: 0 8px;
+    border: 1px solid #d8dbe1;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #fff, #fafafa);
+    color: #4d535c;
+    font-size: 11px;
+    line-height: 16px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+  .duty-modal .form-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 28px;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #6b7280 50%),
+      linear-gradient(135deg, #6b7280 50%, transparent 50%);
+    background-position:
+      calc(100% - 14px) 11px,
+      calc(100% - 9px) 11px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+  .duty-modal .form-field input[type="search"]::placeholder {
+    color: #8b919c;
+  }
+  .duty-modal .form-row {
+    gap: 12px;
+  }
+  .duty-modal .duty-people-list {
+    border: 1px solid #d7dbe3;
+    border-radius: 8px;
+    max-height: 360px;
+    padding: 4px 0;
+  }
+  .duty-modal .duty-person-row {
+    min-height: 34px;
+    padding: 5px 12px;
+    font-size: 13px;
+    line-height: 20px;
+    color: #4f5560;
+  }
+  .duty-modal .duty-person-row input {
+    width: 16px;
+    height: 16px;
+    accent-color: #6ea8ff;
+  }
+  .duty-modal .modal-footer {
+    gap: 12px;
+  }
+  .duty-modal .btn,
+  .duty-modal .btn.btn-brand {
+    min-height: 40px;
+    padding: 0 22px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .duty-modal .btn {
+    background: #f4fbff;
+    border-color: #cfe7fb;
+    color: #4d8fcb;
+  }
+  .duty-modal .btn:hover {
+    background: #ecf7ff;
   }
   .today-count {
     height: 27px;
@@ -618,6 +787,7 @@
       <div class="screen-card">
         <div class="screen-header">
           <h1 class="screen-title">График дежурств L2</h1>
+          <button class="btn btn-add-duty" id="addDutyBtn">Добавить дежурство</button>
         </div>
 
         <nav class="tabs" role="tablist" aria-label="Фильтр по типу смены" id="shiftTabs" hidden>
@@ -631,7 +801,11 @@
           <div class="filters-left">
             <div class="filter-field">
               <span class="field-label">Вид отображения</span>
-              <button class="select-like" type="button" aria-disabled="true">Спринты</button>
+              <select class="select-like native-select" id="viewSelect" aria-label="Вид отображения">
+                <option value="sprints">Спринты</option>
+                <option value="quarter">Квартал</option>
+                <option value="year">Год</option>
+              </select>
             </div>
 
             <div class="period-nav">
@@ -664,7 +838,6 @@
             </div>
 
             <button class="btn btn-ghost" id="expandAllBtn" hidden>Развернуть все</button>
-            <button class="btn btn-brand" id="addDutyBtn" hidden>+ Дежурство</button>
           </div>
         </div>
 
@@ -687,7 +860,7 @@
 </div>
 
 <div class="modal-overlay" id="dutyModalOverlay" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dutyModalTitle" style="max-width: 560px;">
+  <div class="modal duty-modal" role="dialog" aria-modal="true" aria-labelledby="dutyModalTitle">
     <div class="modal-header">
       <h2 class="modal-title" id="dutyModalTitle">Дежурство</h2>
       <button type="button" class="modal-close" id="dutyModalClose" aria-label="Закрыть">✕</button>
@@ -746,6 +919,7 @@
 
   var todayIdx = DATA.sprints.findIndex(function (s) { return s.current; });
   var defaultPairStart = todayIdx > 0 ? todayIdx - 1 : todayIdx;
+  var MONTHS_SHORT_UP = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
 
   var lastRenderContext = null;
 
@@ -754,10 +928,24 @@
     hiddenDepts: new Set(),
     hiddenGroups: new Set(),   // ключи "deptId::groupId"
     expanded: new Set(),       // ключи продуктов (deptId или deptId::groupId)
-    sprintPairStart: defaultPairStart
+    zoom: "sprints",
+    sprintPairStart: defaultPairStart,
+    quarterAnchor: quarterStartOf(Roster.fromISO(DATA.today)),
+    yearAnchor: Roster.fromISO(DATA.today).getFullYear()
   };
 
   function groupKey(deptId, groupId) { return deptId + "::" + groupId; }
+  function quarterStartOf(d) {
+    var q = Math.floor(d.getMonth() / 3);
+    return new Date(d.getFullYear(), q * 3, 1);
+  }
+  function mondayOnOrBefore(d) {
+    var r = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var wd = r.getDay();
+    var diff = wd === 0 ? 6 : wd - 1;
+    r.setDate(r.getDate() - diff);
+    return r;
+  }
 
   function visibleDepartments() {
     return DATA.departments
@@ -834,11 +1022,16 @@
   // ---------------------------------------------------------- controls --
 
   var shiftTabs = document.getElementById("shiftTabs");
+  var viewSelect = document.getElementById("viewSelect");
   shiftTabs.addEventListener("click", function (e) {
     var btn = e.target.closest(".tab-btn");
     if (!btn) return;
     shiftTabs.querySelectorAll(".tab-btn").forEach(function (b) { b.setAttribute("aria-selected", b === btn ? "true" : "false"); });
     state.shift = btn.dataset.shift;
+    render();
+  });
+  viewSelect.addEventListener("change", function () {
+    state.zoom = viewSelect.value;
     render();
   });
 
@@ -925,6 +1118,8 @@
   document.getElementById("nextBtn").addEventListener("click", function () { shiftPeriod(1); });
   document.getElementById("todayBtn").addEventListener("click", function () {
     state.sprintPairStart = defaultPairStart;
+    state.quarterAnchor = quarterStartOf(Roster.fromISO(DATA.today));
+    state.yearAnchor = Roster.fromISO(DATA.today).getFullYear();
     render();
     scrollToTodayColumn();
   });
@@ -939,8 +1134,14 @@
   });
 
   function shiftPeriod(dir) {
-    var next = state.sprintPairStart + dir;
-    state.sprintPairStart = Math.max(0, Math.min(DATA.sprints.length - 2, next));
+    if (state.zoom === "sprints") {
+      var next = state.sprintPairStart + dir;
+      state.sprintPairStart = Math.max(0, Math.min(DATA.sprints.length - 2, next));
+    } else if (state.zoom === "quarter") {
+      state.quarterAnchor = new Date(state.quarterAnchor.getFullYear(), state.quarterAnchor.getMonth() + dir * 3, 1);
+    } else {
+      state.yearAnchor += dir;
+    }
     render();
   }
 
@@ -963,6 +1164,15 @@
 
   function setColumnsVar(count) {
     var dayW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--day-w-fixed")) || 48.25;
+    document.getElementById("tlGrid").style.setProperty("--day-w", dayW + "px");
+    return dayW;
+  }
+
+  function setAdaptiveColumnsVar(count, minWidth) {
+    var wrap = document.getElementById("tlWrap");
+    var labelW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--label-col-w")) || 350;
+    var available = Math.max(0, wrap.clientWidth - labelW);
+    var dayW = Math.max(minWidth, available / count);
     document.getElementById("tlGrid").style.setProperty("--day-w", dayW + "px");
     return dayW;
   }
@@ -997,6 +1207,13 @@
   }
 
   function render() {
+    if (viewSelect.value !== state.zoom) viewSelect.value = state.zoom;
+    if (state.zoom === "sprints") renderSprints();
+    else if (state.zoom === "quarter") renderQuarter();
+    else renderYear();
+  }
+
+  function renderSprints() {
     var visibleDepts = visibleDepartments();
     var allProductRows = buildRows(DATA.departments).filter(function (r) { return r.type === "product"; });
     var visibleProductRows = buildRows(visibleDepts).filter(function (r) { return r.type === "product"; });
@@ -1132,7 +1349,17 @@
       cell.style.gridRow = "2";
       cell.style.top = "20px";
       cell.dataset.date = iso;
+      cell.tabIndex = 0;
+      cell.setAttribute("role", "button");
+      cell.setAttribute("aria-label", "Открыть дежурство на " + Roster.formatRangeFull(iso, iso));
       cell.innerHTML = '<span class="d-num">' + Roster.dayNum(iso) + '</span>&nbsp;-&nbsp;' + weekdayTitle(iso);
+      cell.addEventListener("click", function () { openDutyModal({ fromISO: iso, toISO: iso }); });
+      cell.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openDutyModal({ fromISO: iso, toISO: iso });
+        }
+      });
       grid.appendChild(cell);
     });
 
@@ -1218,10 +1445,22 @@
         cell.textContent = count === 0 ? "0" : count + " с";
         cell.dataset.tooltip = gr.name + ", " + Roster.formatRangeFull(iso, iso) + ": " +
           (count === 0 ? "никто не назначен" : count + " " + pluralPeopleShort(count) + " на дежурстве");
+        cell.tabIndex = 0;
+        cell.setAttribute("role", "button");
+        cell.setAttribute("aria-label", "Открыть дежурство для " + gr.name + " на " + Roster.formatRangeFull(iso, iso));
+        cell.addEventListener("click", function (evt) {
+          evt.stopPropagation();
+          openDutyModal({ deptId: gr.deptId, groupId: gr.groupId, fromISO: iso, toISO: iso });
+        });
+        cell.addEventListener("keydown", function (evt) {
+          if (evt.key === "Enter" || evt.key === " ") {
+            evt.preventDefault();
+            evt.stopPropagation();
+            openDutyModal({ deptId: gr.deptId, groupId: gr.groupId, fromISO: iso, toISO: iso });
+          }
+        });
         headerBody.appendChild(cell);
       });
-      headerBody.style.cursor = "pointer";
-      headerBody.addEventListener("click", function () { toggleProduct(gr.key); });
       grid.appendChild(headerBody);
 
       if (!isExpanded) return;
@@ -1245,6 +1484,15 @@
         m.laneSpans.filter(function (span) { return span.lane === lane; }).forEach(function (span) {
           var bar = buildBar(span);
           laneBody.appendChild(bar.el);
+        });
+
+        laneBody.addEventListener("click", function (evt) {
+          var interactive = evt.target.closest(".duty-card");
+          if (interactive) return;
+          var rect = laneBody.getBoundingClientRect();
+          var idx = Math.max(0, Math.min(days.length - 1, Math.floor((evt.clientX - rect.left) / dayW)));
+          var iso = days[idx];
+          openDutyModal({ deptId: gr.deptId, groupId: gr.groupId, fromISO: iso, toISO: iso });
         });
 
         grid.appendChild(laneBody);
@@ -1285,6 +1533,247 @@
     Roster.wireHighlight(grid);
   }
 
+  function syncFilterLabels(visibleDepts) {
+    var allProductRows = buildRows(DATA.departments).filter(function (r) { return r.type === "product"; });
+    var visibleProductRows = buildRows(visibleDepts).filter(function (r) { return r.type === "product"; });
+    var hiddenCount = (DATA.departments.length - visibleDepts.length) + state.hiddenGroups.size;
+    document.getElementById("deptFilterCount").textContent = hiddenCount > 0 ? String(hiddenCount) : "";
+    document.getElementById("deptFilterLabel").textContent =
+      visibleDepts.length === DATA.departments.length ? "Все" :
+      (visibleDepts.length === 1 ? visibleDepts[0].name : visibleDepts.length + " выбрано");
+    document.getElementById("productFilterCount").textContent =
+      visibleProductRows.length === allProductRows.length ? "" : String(visibleProductRows.length);
+    document.getElementById("productFilterLabel").textContent =
+      visibleProductRows.length === allProductRows.length ? "Все" :
+      (visibleProductRows.length === 1 ? visibleProductRows[0].name : visibleProductRows.length + " выбрано");
+  }
+
+  function getFilteredContext() {
+    var visibleDepts = visibleDepartments();
+    syncFilterLabels(visibleDepts);
+    var filteredDuties = state.shift === "all" ? DATA.duties : DATA.duties.filter(function (d) { return d.shift === state.shift; });
+    filteredDuties = filteredDuties.filter(function (d) {
+      var p = peopleById[d.personId];
+      if (!p) return false;
+      if (state.hiddenDepts.has(p.departmentId)) return false;
+      if (p.groupId && state.hiddenGroups.has(groupKey(p.departmentId, p.groupId))) return false;
+      return true;
+    });
+    updateTodayCount(filteredDuties);
+    lastRenderContext = { visibleDepts: visibleDepts, filteredDuties: filteredDuties, peopleById: peopleById };
+    return { visibleDepts: visibleDepts, filteredDuties: filteredDuties };
+  }
+
+  function renderQuarter() {
+    var ctx = getFilteredContext();
+    var visibleDepts = ctx.visibleDepts;
+    var filteredDuties = ctx.filteredDuties;
+    var anchor = state.quarterAnchor;
+    var q = Math.floor(anchor.getMonth() / 3) + 1;
+    document.getElementById("periodLabel").textContent = anchor.getFullYear() + " · Q" + q;
+    document.getElementById("prevBtn").disabled = false;
+    document.getElementById("nextBtn").disabled = false;
+
+    var weekStart = mondayOnOrBefore(anchor);
+    var weeks = [];
+    for (var i = 0; i < 13; i++) {
+      var wStart = Roster.addDaysDate(weekStart, i * 7);
+      var wEnd = Roster.addDaysDate(wStart, 6);
+      weeks.push({ start: Roster.toISO(wStart), end: Roster.toISO(wEnd) });
+    }
+
+    var rows = buildRows(visibleDepts);
+    var grid = document.getElementById("tlGrid");
+    grid.innerHTML = "";
+    setAdaptiveColumnsVar(weeks.length, 96);
+    grid.style.gridTemplateColumns = "var(--label-col-w) repeat(" + weeks.length + ", var(--day-w))";
+    grid.style.gridTemplateRows = "20px 20px repeat(" + rows.length + ", 36px)";
+
+    var corner = document.createElement("div");
+    corner.className = "corner-cell";
+    corner.textContent = "Кластер / продукт";
+    grid.appendChild(corner);
+
+    weeks.forEach(function (w, idx) {
+      var sprint = DATA.sprints.find(function (s) { return w.start >= s.start && w.start <= s.end; });
+      var cell = document.createElement("div");
+      cell.className = "sprint-head-cell" + (sprint ? " sprint-clickable" : "");
+      cell.style.gridColumn = (idx + 2) + "";
+      cell.style.gridRow = "1";
+      if (sprint) {
+        cell.dataset.sprintId = sprint.id;
+        cell.tabIndex = 0;
+        cell.setAttribute("role", "button");
+        cell.setAttribute("aria-label", "Сводка по спринту " + sprint.id);
+        cell.innerHTML = "<span>" + sprint.id.replace("SPRINT-", "S") + "</span>";
+      } else {
+        cell.textContent = "—";
+      }
+      grid.appendChild(cell);
+    });
+
+    weeks.forEach(function (w, idx) {
+      var isCurrentWeek = DATA.today >= w.start && DATA.today <= w.end;
+      var cell = document.createElement("div");
+      cell.className = "day-head-cell" + (isCurrentWeek ? " is-today" : "");
+      cell.style.gridColumn = (idx + 2) + "";
+      cell.style.gridRow = "2";
+      cell.style.top = "20px";
+      cell.innerHTML = '<span class="d-num">' + Roster.dayNum(w.start) + " " + Roster.monthShort(w.start) + '</span>&nbsp;-&nbsp;<span>' +
+        Roster.dayNum(w.end) + " " + Roster.monthShort(w.end) + "</span>";
+      grid.appendChild(cell);
+    });
+
+    rows.forEach(function (gr, rowIdx) {
+      var gridRow = rowIdx + 3;
+      if (gr.type === "cluster") {
+        var section = document.createElement("div");
+        section.className = "cluster-row";
+        section.style.gridColumn = "1 / -1";
+        section.style.gridRow = gridRow + "";
+        section.innerHTML = '<span class="cluster-label"></span>';
+        section.firstChild.textContent = gr.name;
+        grid.appendChild(section);
+        return;
+      }
+
+      var label = document.createElement("div");
+      label.className = "product-label" + (gr.nested ? " is-nested" : "");
+      label.style.gridColumn = "1";
+      label.style.gridRow = gridRow + "";
+      label.innerHTML = '<span class="p-team" aria-hidden="true"></span><span class="p-name"></span>';
+      label.querySelector(".p-name").textContent = gr.name;
+      grid.appendChild(label);
+
+      weeks.forEach(function (w, idx) {
+        var cell = document.createElement("div");
+        cell.className = "agg-cell";
+        cell.style.gridColumn = (idx + 2) + "";
+        cell.style.gridRow = gridRow + "";
+        cell.style.height = "36px";
+        cell.style.padding = "4px 8px";
+        var people = Roster.peopleInRange(filteredDuties, peopleById, gr.deptId, w.start, w.end, gr.groupId);
+        if (!people.length) {
+          cell.innerHTML = '<span class="empty-dash">—</span>';
+        } else {
+          var shown = people.slice(0, 3);
+          var html = '<span class="avatar-stack">' + shown.map(function (p) {
+            var partial = p.weekDays < 7 ? p.weekDays : null;
+            return Roster.avatarHtml(p, "avatar-sm", ' data-person-id="' + p.id + '"', p.isLead, partial);
+          }).join("") + '</span>';
+          if (people.length > 3) html += '<span class="agg-more">+' + (people.length - 3) + '</span>';
+          cell.innerHTML = html;
+          cell.dataset.tooltip = people.map(function (p) { return p.fullName + " (" + p.weekDays + " дн.)"; }).join(", ");
+        }
+        grid.appendChild(cell);
+      });
+    });
+
+    Roster.wireHighlight(grid);
+  }
+
+  function renderYear() {
+    var ctx = getFilteredContext();
+    var visibleDepts = ctx.visibleDepts;
+    var filteredDuties = ctx.filteredDuties;
+    var year = state.yearAnchor;
+    document.getElementById("periodLabel").textContent = String(year);
+    document.getElementById("prevBtn").disabled = false;
+    document.getElementById("nextBtn").disabled = false;
+
+    var rows = buildRows(visibleDepts);
+    var grid = document.getElementById("tlGrid");
+    grid.innerHTML = "";
+    setAdaptiveColumnsVar(12, 112);
+    grid.style.gridTemplateColumns = "var(--label-col-w) repeat(12, var(--day-w))";
+    grid.style.gridTemplateRows = "20px 20px repeat(" + rows.length + ", 36px)";
+
+    var corner = document.createElement("div");
+    corner.className = "corner-cell";
+    corner.textContent = "Кластер / продукт";
+    grid.appendChild(corner);
+
+    var yCell = document.createElement("div");
+    yCell.className = "sprint-head-cell";
+    yCell.style.gridColumn = "2 / span 12";
+    yCell.style.gridRow = "1";
+    yCell.textContent = year + " год";
+    grid.appendChild(yCell);
+
+    var todayDate = Roster.fromISO(DATA.today);
+    for (var m = 0; m < 12; m++) {
+      var isCurrentMonth = todayDate.getFullYear() === year && todayDate.getMonth() === m;
+      var h = document.createElement("div");
+      h.className = "day-head-cell" + (isCurrentMonth ? " is-today" : "");
+      h.style.gridColumn = (m + 2) + "";
+      h.style.gridRow = "2";
+      h.style.top = "20px";
+      h.innerHTML = '<span class="d-num">' + MONTHS_SHORT_UP[m] + "</span>";
+      grid.appendChild(h);
+    }
+
+    rows.forEach(function (gr, rowIdx) {
+      var gridRow = rowIdx + 3;
+      if (gr.type === "cluster") {
+        var section = document.createElement("div");
+        section.className = "cluster-row";
+        section.style.gridColumn = "1 / -1";
+        section.style.gridRow = gridRow + "";
+        section.innerHTML = '<span class="cluster-label"></span>';
+        section.firstChild.textContent = gr.name;
+        grid.appendChild(section);
+        return;
+      }
+
+      var label = document.createElement("div");
+      label.className = "product-label" + (gr.nested ? " is-nested" : "");
+      label.style.gridColumn = "1";
+      label.style.gridRow = gridRow + "";
+      label.innerHTML = '<span class="p-team" aria-hidden="true"></span><span class="p-name"></span>';
+      label.querySelector(".p-name").textContent = gr.name;
+      grid.appendChild(label);
+
+      for (var m = 0; m < 12; m++) {
+        var mm = String(m + 1).padStart(2, "0");
+        var monthStart = year + "-" + mm + "-01";
+        var monthEnd = year + "-" + mm + "-" + String(new Date(year, m + 1, 0).getDate()).padStart(2, "0");
+        var cell = document.createElement("div");
+        cell.className = "agg-cell clickable";
+        cell.style.gridColumn = (m + 2) + "";
+        cell.style.gridRow = gridRow + "";
+        cell.style.height = "36px";
+        cell.style.padding = "4px 8px";
+
+        var people = Roster.peopleInRange(filteredDuties, peopleById, gr.deptId, monthStart, monthEnd, gr.groupId);
+        if (!people.length) {
+          cell.innerHTML = '<span class="empty-dash">—</span>';
+        } else {
+          var html = '<span class="avatar-stack">' + people.slice(0, 3).map(function (p) {
+            return Roster.avatarHtml(p, "avatar-sm", ' data-person-id="' + p.id + '"', p.isLead);
+          }).join("") + '</span>';
+          if (people.length > 3) html += '<span class="agg-more">+' + (people.length - 3) + '</span>';
+          cell.innerHTML = html;
+        }
+        cell.dataset.tooltip = MONTHS_SHORT_UP[m] + " " + year + ": " + (people.length ? people.map(function (p) { return p.fullName; }).join(", ") : "дежурств нет");
+        cell.addEventListener("click", function (monthIndex) {
+          return function () { jumpToMonth(year, monthIndex); };
+        }(m));
+        grid.appendChild(cell);
+      }
+    });
+
+    Roster.wireHighlight(grid);
+  }
+
+  function jumpToMonth(year, month) {
+    var midISO = Roster.toISO(new Date(year, month, 15));
+    var idx = DATA.sprints.findIndex(function (s) { return midISO >= s.start && midISO <= s.end; });
+    state.sprintPairStart = Math.max(0, Math.min(DATA.sprints.length - 2, idx > 0 ? idx - 1 : Math.max(idx, 0)));
+    state.zoom = "sprints";
+    viewSelect.value = "sprints";
+    render();
+  }
+
   function toggleProduct(key) {
     if (state.expanded.has(key)) state.expanded.delete(key);
     else state.expanded.add(key);
@@ -1311,7 +1800,7 @@
     dutyDept.appendChild(opt);
   });
 
-  function refreshGroupSelect() {
+  function refreshGroupSelect(preferredGroupId) {
     var dept = departmentsById[dutyDept.value];
     dutyGroup.innerHTML = "";
     if (dept && dept.groups && dept.groups.length) {
@@ -1322,6 +1811,7 @@
         opt.textContent = g.name;
         dutyGroup.appendChild(opt);
       });
+      if (preferredGroupId) dutyGroup.value = preferredGroupId;
     } else {
       dutyGroup.disabled = true;
       var opt = document.createElement("option");
@@ -1372,13 +1862,17 @@
   dutyGroup.addEventListener("change", refreshPeopleList);
   dutySearch.addEventListener("input", refreshPeopleList);
 
-  function openDutyModal() {
+  function openDutyModal(opts) {
+    opts = opts || {};
     dutyLastFocused = document.activeElement;
-    dutyFrom.value = DATA.today;
-    dutyTo.value = DATA.today;
+    if (opts.deptId) dutyDept.value = opts.deptId;
+    dutyFrom.value = opts.fromISO || DATA.today;
+    dutyTo.value = opts.toISO || dutyFrom.value;
     dutySearch.value = "";
     dutyFormError.hidden = true;
-    refreshGroupSelect();
+    dutyFormError.textContent = "";
+    dutyPeopleList.querySelectorAll("input:checked").forEach(function (cb) { cb.checked = false; });
+    refreshGroupSelect(opts.groupId || null);
     dutyOverlay.hidden = false;
     dutyDept.focus();
   }
@@ -1387,7 +1881,7 @@
     if (dutyLastFocused && dutyLastFocused.focus) dutyLastFocused.focus();
   }
 
-  document.getElementById("addDutyBtn").addEventListener("click", openDutyModal);
+  document.getElementById("addDutyBtn").addEventListener("click", function () { openDutyModal({}); });
   document.getElementById("dutyModalClose").addEventListener("click", closeDutyModal);
   document.getElementById("dutyCancelBtn").addEventListener("click", closeDutyModal);
   dutyOverlay.addEventListener("click", function (e) { if (e.target === dutyOverlay) closeDutyModal(); });
@@ -1396,29 +1890,7 @@
   });
 
   document.getElementById("dutySaveBtn").addEventListener("click", function () {
-    var from = dutyFrom.value, to = dutyTo.value;
-    var selected = Array.from(dutyPeopleList.querySelectorAll("input:checked")).map(function (cb) { return cb.value; });
-    var err = "";
-    if (!from || !to) err = "Укажите обе даты";
-    else if (from > to) err = "«С даты» позже «По дату»";
-    else if (!selected.length) err = "Выберите хотя бы одного дежурного";
-    if (err) {
-      dutyFormError.textContent = err;
-      dutyFormError.hidden = false;
-      return;
-    }
-    // Существующие дни этого человека/смены не дублируем
-    var existing = new Set(DATA.duties.map(function (d) { return d.personId + "|" + d.date + "|" + d.shift; }));
-    selected.forEach(function (personId) {
-      for (var iso = from; iso <= to; iso = Roster.addDays(iso, 1)) {
-        var key = personId + "|" + iso + "|" + dutyShift.value;
-        if (existing.has(key)) continue;
-        DATA.duties.push({ personId: personId, date: iso, shift: dutyShift.value, lead: false });
-        existing.add(key);
-      }
-    });
     closeDutyModal();
-    render();
   });
 
   // ---------------------------------------------------------------- init --

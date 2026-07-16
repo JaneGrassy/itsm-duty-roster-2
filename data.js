@@ -182,26 +182,22 @@
     }
   }
 
-  // Многолюдная группа: каждый участник дежурит своими отрезками с паузами
-  // (разная фаза старта и разный ритм), отрезки перекрываются — в один день
-  // выходит 4–7 человек одновременно. Пример нагрузки для варианта 3.
-  function generateCrowd(members, shift, seed) {
-    var rangeStart = fromISO(sprints[0].start);
-    var rangeEnd = fromISO(sprints[sprints.length - 1].end);
-    members.forEach(function (personId, mi) {
-      var lenIdx = seed + mi;
-      var cursor = mi === 0 ? rangeStart : addDays(rangeStart, (mi * 3 + seed) % 7);
-      var lead = mi === 0; // условный старший группы — лид на своих отрезках
-      while (cursor <= rangeEnd) {
-        var len = STINT_LENGTHS[lenIdx % STINT_LENGTHS.length];
-        var end = addDays(cursor, len - 1);
-        if (end > rangeEnd) end = rangeEnd;
-        addDutyRange(personId, toISO(cursor), toISO(end), shift, lead);
-        var gap = 2 + ((lenIdx * 2 + mi) % 5); // 2..6 дней отдыха
-        cursor = addDays(end, gap + 1);
-        lenIdx++;
-      }
-    });
+  // Демонстрационный сценарий для проверки поведения строк в спринтовом виде:
+  // окно S14+S15 показывает 8 человек, S15+S16 — 6, S16+S17 — 4,
+  // S17+S18 — 2. Так на прототипе сразу видно, что число строк
+  // пересчитывается при листании пар спринтов.
+  function generateShrinkingWindowDemo() {
+    addDutyRange("p13", "2026-06-29", "2026-07-04", "day", true);   // только S14
+    addDutyRange("p14", "2026-07-05", "2026-07-12", "day", false);  // только S14
+
+    addDutyRange("p19", "2026-07-13", "2026-07-18", "day", true);   // только S15
+    addDutyRange("p20", "2026-07-19", "2026-07-26", "day", false);  // только S15
+
+    addDutyRange("p21", "2026-07-13", "2026-08-02", "day", true);   // S15-S16
+    addDutyRange("p22", "2026-07-20", "2026-08-09", "day", false);  // S15-S16
+
+    addDutyRange("p23", "2026-07-13", "2026-09-06", "day", true);   // S15-S18
+    addDutyRange("p24", "2026-07-25", "2026-09-06", "day", false);  // S15-S18
   }
 
   generateRotation(["p1", "p2"], "day", 0);       // Аппарат управления
@@ -209,7 +205,7 @@
   generateRotation(["p7", "p8"], "night", 2);     // Backend — ночь (доп.)
   generateRotation(["p9", "p10"], "day", 3);      // Поддержка / МПК
   generateSparseRotation(["p11", "p12"], "day", 4); // Поддержка / ПСУ — с пустыми днями
-  generateCrowd(["p13", "p14", "p19", "p20", "p21", "p22", "p23", "p24"], "day", 5); // Поддержка / Хумо — 4-7 чел/день
+  generateShrinkingWindowDemo(); // Поддержка / Хумо — демонстрация пересчёта строк по окну спринтов
   generateRotation(["p15", "p16"], "day", 6);     // Поддержка / Узкард — день
   generateRotation(["p17", "p18"], "night", 7);   // Поддержка / Узкард — ночь (доп.)
 

@@ -927,7 +927,7 @@
     shift: "all",
     hiddenDepts: new Set(),
     hiddenGroups: new Set(),   // ключи "deptId::groupId"
-    expanded: new Set(),       // ключи продуктов (deptId или deptId::groupId)
+    expanded: new Set(["support::humo"]), // ключи продуктов (deptId или deptId::groupId)
     zoom: "sprints",
     sprintPairStart: defaultPairStart,
     quarterAnchor: quarterStartOf(Roster.fromISO(DATA.today)),
@@ -1271,9 +1271,8 @@
     var gridRows = buildRows(visibleDepts);
 
     // Раскладка строк: у кластера и у свёрнутого продукта — 1 строка.
-    // У развёрнутого продукта — 1 строка-заголовок (фон + счётчик людей)
-    // и ровно столько строк ниже, сколько разных людей видно в текущем
-    // окне (Roster.peopleInRange) — без лейн-паковки, 1 человек = 1 строка.
+    // У развёрнутого продукта — 1 строка-заголовок и затем по одной строке
+    // на каждого человека, который виден в текущем окне двух спринтов.
     var HEADER_ROW_H = 22, LANE_ROW_H = 44, CLUSTER_ROW_H = 22;
     var rowMeta = [];
     var rowCursor = 3;
@@ -1285,27 +1284,18 @@
       }
       var isExpanded = state.expanded.has(gr.key);
       var windowPeople = Roster.peopleInRange(filteredDuties, peopleById, gr.deptId, windowStart, windowEnd, gr.groupId);
-      var laneSpans = mergedSpansForRow(filteredDuties, gr, windowStart, windowEnd).map(function (span) {
-        return {
-          personId: span.personId,
-          departmentId: span.departmentId,
-          groupId: span.groupId,
-          shift: span.shift,
-          lead: span.lead,
-          start: span.start,
-          end: span.end
-        };
+      var personIds = new Set(windowPeople.map(function (person) { return person.id; }));
+      var personSpans = mergedSpansForRow(filteredDuties, gr, windowStart, windowEnd).filter(function (span) {
+        return personIds.has(span.personId);
       });
-      var laneCount = isExpanded && laneSpans.length ? Roster.assignLanes(laneSpans) : 0;
-      var footprint = 1 + (isExpanded ? laneCount : 0);
+      var footprint = 1 + (isExpanded ? windowPeople.length : 0);
       rowMeta.push({
         row: gr,
         gridRowStart: rowCursor,
         footprint: footprint,
         isExpanded: isExpanded,
         windowPeople: windowPeople,
-        laneSpans: laneSpans,
-        laneCount: laneCount
+        personSpans: personSpans
       });
       rowCursor += footprint;
     });
@@ -1465,8 +1455,8 @@
 
       if (!isExpanded) return;
 
-      for (var lane = 0; lane < m.laneCount; lane++) {
-        var laneGridRow = m.gridRowStart + 1 + lane;
+      m.windowPeople.forEach(function (person, personIndex) {
+        var laneGridRow = m.gridRowStart + 1 + personIndex;
 
         var laneSpacer = document.createElement("div");
         laneSpacer.className = "lane-spacer";
@@ -1481,7 +1471,7 @@
         laneBody.setAttribute("role", "gridcell");
         appendColBg(laneBody);
 
-        m.laneSpans.filter(function (span) { return span.lane === lane; }).forEach(function (span) {
+        m.personSpans.filter(function (span) { return span.personId === person.id; }).forEach(function (span) {
           var bar = buildBar(span);
           laneBody.appendChild(bar.el);
         });
@@ -1496,7 +1486,7 @@
         });
 
         grid.appendChild(laneBody);
-      }
+      });
     });
 
     // Колонка "сегодня" — оранжевая рамка на всю высоту, как в проде
